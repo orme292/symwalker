@@ -6,6 +6,7 @@ import (
 	"testing"
 )
 
+// todo: rewrite with new history type in mind
 func TestHistoryMethods(t *testing.T) {
 
 	paths := []string{
