@@ -6,15 +6,15 @@ import (
 )
 
 func startLoop(conf *Conf) (res Results, err error) {
-	hist := make(history)
-	hist.add(conf.StartPath)
+	hist := make(history, 0)
 	err = dirWalk(conf, conf.StartPath, conf.Depth, res, &hist)
 	return
 }
 
 func dirWalk(conf *Conf, path string, remDepth int, res Results, hist *history) (err error) {
+	// if the remaining depth (remDepth) is 0, do not continue.
 	if remDepth == 0 {
-		return nil
+		return NewError(OpsMaxDepthReached, s("%q will not be walked", path))
 	}
 	remDepth = depth(remDepth)
 
@@ -22,6 +22,12 @@ func dirWalk(conf *Conf, path string, remDepth int, res Results, hist *history) 
 	// todo: check if dir has already been walked (in history), if it has, skip = true
 	if hist.count(path) > 1 {
 		skip = true
+	} else {
+		err = hist.add(path, emptyString)
+		// todo: determine how to handle a potential symlink loop. currently, returning an error does nothing
+		if err != nil {
+			return err // the only possible error is currently ErrWalkPotentialSymlinkLoop
+		}
 	}
 
 	if skip {
