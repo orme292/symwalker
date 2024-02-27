@@ -7,9 +7,9 @@ import (
 type WalkTarget int
 
 const (
-	TargetDir WalkTarget = iota
+	TargetRegular WalkTarget = iota
 	TargetSymlink
-	TargetRegular
+	TargetDir
 )
 
 func (wt WalkTarget) String() string {
@@ -39,4 +39,17 @@ func (wt WalkTarget) Is() any {
 	default:
 		return 0
 	}
+}
+
+func (wt WalkTarget) Matches(mode os.FileMode) bool {
+	if wt.IsDir() {
+		return wt.IsDir() == mode.IsDir()
+	}
+	if wt.IsRegular() {
+		return wt.IsRegular() == mode.IsRegular()
+	}
+	if wt.IsSymlink() {
+		return wt.IsSymlink() == (mode&os.ModeSymlink != 0)
+	}
+	return false
 }

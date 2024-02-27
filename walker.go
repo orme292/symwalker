@@ -2,9 +2,19 @@ package symwalker
 
 import (
 	"os"
+	"path/filepath"
 )
 
 func SymWalker(conf *Conf) (res *Results, err error) {
+	conf.StartPath = absPathNonFatal(filepath.Clean(conf.StartPath))
+
+	// conf.GlobPattern must have a value. conf.GlobCheck() applies a default
+	// and checks that it's valid.
+	e := conf.GlobCheck()
+	if e != nil {
+		return nil, e // Error is already type ErrConfGlobalMalformed
+	}
+
 	// Check to make sure that the StartPath is readable and also that it is
 	// not a Symlinked file or path. Even though the StartPath, as a symlink,
 	// could be pointing to a directory, it doesn't seem to make sense to
@@ -22,9 +32,9 @@ func SymWalker(conf *Conf) (res *Results, err error) {
 		return nil, NewError(ErrStartPathIsNotDir, s("%q", conf.StartPath))
 	}
 
-	//
-	if conf.Depth >= 0 {
-		conf.Depth++
+	// A depth setting of 0 or less in the configuration is equal to infinite depth.
+	if conf.Depth <= 0 {
+		conf.Depth = DepthInfinite
 	}
 	return nil, nil
 }

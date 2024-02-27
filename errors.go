@@ -10,6 +10,8 @@ import (
 type WalkOpErr error
 
 var (
+	ErrConfGlobalMalformed = errors.New("GlobPattern is malformed")
+
 	ErrStartPathNotReadable = errors.New("StartPath could not be read")
 	ErrStartPathIsSymlink   = errors.New("StartPath cannot be a symlink")
 	ErrStartPathIsNotDir    = errors.New("StartPath is not a directory")

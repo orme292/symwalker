@@ -16,9 +16,13 @@ func dirWalk(conf *Conf, path string, remDepth int, res Results, hist *history) 
 	if remDepth == 0 {
 		return nil
 	}
+	remDepth = depth(remDepth)
 
 	var skip bool
 	// todo: check if dir has already been walked (in history), if it has, skip = true
+	if hist.count(path) > 1 {
+		skip = true
+	}
 
 	if skip {
 		return nil
@@ -35,15 +39,30 @@ func dirWalk(conf *Conf, path string, remDepth int, res Results, hist *history) 
 			panic(err)
 		}
 		for _, file := range files {
-			hist.add(filepath.Join(path, file.Name()))
-			inf, err := file.Info()
+			info, err := file.Info()
 			if err != nil {
-				// todo: report a real error
-				panic(err)
+				// todo: work out how this should report problems when reading file info
+				res.add(path, os.ModeIrregular, err)
+				continue
 			}
-			// todo: if file is of target type, add to results
-			// todo: if file is of dir type, walk it
+			if conf.TargetType.Matches(info.Mode()) {
+				if conf.TargetType.IsRegular() && info.Mode().IsRegular() {
+					if globMatch(filepath.Join(path, file.Name()), conf.GlobPattern) {
+						res.add(path, info.Mode().Type(), nil)
+					}
+				} else {
+					res.add(path, info.Mode().Type(), nil)
+				}
+			}
+			if info.IsDir() {
+				// todo: walk directory
+			}
 			// todo: if file is of symlink type pointing to directory, are we following? walk it
+			if info.Mode()&os.ModeSymlink == 0 {
+				if leadsToDir(filepath.Join(path, file.Name())) {
+					// todo: symlink walker ran here
+				}
+			}
 			// todo: if file is of symlink type pointing to non-dir, are we following? if symlink target is target type, add to results
 			// outta here
 		}

@@ -3,8 +3,6 @@ package symwalker
 import (
 	"errors"
 	"fmt"
-	"log"
-	"os"
 	"testing"
 )
 
@@ -30,20 +28,48 @@ func TestSymWalker_StartPathErrors(t *testing.T) {
 		fmt.Println("Testing: ", path)
 		conf := &Conf{
 			StartPath:      path,
-			Depth:          -1,
+			Depth:          DepthInfinite,
 			FollowSymLinks: true,
-			TargetType:     os.ModeDir,
-			Blob:           "*",
+			TargetType:     TargetDir,
+			GlobPattern:    GlobMatchAll,
 		}
 		_, got := SymWalker(conf)
 		if got != nil {
 			if errors.Is(got, want) == false {
 				t.Errorf("!FAIL:\n\tWANT: %s\n\tGOT: %v", want.Error(), got.Error())
 			} else {
-				log.Printf("PASS: WANT: %v (GOT: %v)", want.Error(), got.Error())
+				t.Logf("PASS: WANT: %v (GOT: %v)", want.Error(), got.Error())
 			}
 		} else {
 			t.Errorf("!FAIL:\n\tWANT %s\n\tGOT: nil", want.Error())
 		}
+	}
+}
+
+func TestSymWalker_GlobCheck(t *testing.T) {
+	path := "/tests/start"
+	conf := &Conf{
+		StartPath:      path,
+		Depth:          DepthInfinite,
+		FollowSymLinks: true,
+		TargetType:     TargetRegular,
+		GlobPattern:    GlobMatchAll,
+	}
+	_, got := SymWalker(conf)
+	if got != nil {
+		t.Errorf("FAIL!:\n\tWANT: nil\n\tGOT: %v", got.Error())
+	} else {
+		t.Log("PASS: WANT: nil (GOT: nil)")
+	}
+
+	conf.GlobPattern = "[-]"
+	want := ErrConfGlobalMalformed
+	_, got = SymWalker(conf)
+	if !errors.Is(got, want) && got != nil {
+		t.Errorf("FAIL!:\n\tWANT: %T\n\tGOT: %T", want, got)
+	} else if errors.Is(got, want) {
+		t.Logf("PASS: WANT: %v (GOT: %v)", want.Error(), got.Error())
+	} else if got == nil {
+		t.Errorf("FAIL: WANT: %v (GOT: nil)", want.Error())
 	}
 }

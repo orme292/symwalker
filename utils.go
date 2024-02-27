@@ -38,3 +38,18 @@ func format(path string) string {
 	}
 	return strings.TrimSuffix(clean, "/")
 }
+
+func globMatch(path string, pattern string) bool {
+	found, err := filepath.Match(pattern, path)
+	if err != nil {
+		return false
+	}
+	return found
+}
+
+func depth(val int) int {
+	if val != DepthInfinite {
+		val--
+	}
+	return val
+}
