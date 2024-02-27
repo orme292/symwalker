@@ -19,3 +19,31 @@ func (h *history) add(path string) {
 func (h *history) count(path string) int {
 	return int((*h)[path])
 }
+
+type histEnt struct {
+	path     string
+	count    uint8
+	referrer []string //referrer is a symlink that targeted the path in the entry.
+}
+
+type historyA []*histEnt
+
+func (hA *historyA) add(path, referrer string) error {
+	path = format(path)
+	for _, entry := range *hA {
+		if entry.path == path {
+			entry.count++
+			if referrer != emptyString {
+				// todo: must iterate through referrers and check for repeats.
+				entry.referrer = append(entry.referrer, format(referrer))
+			}
+		}
+		return nil
+	}
+	*hA = append(*hA, &histEnt{
+		path:     path,
+		count:    1,
+		referrer: []string{referrer},
+	})
+	return nil
+}

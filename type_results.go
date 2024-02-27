@@ -28,3 +28,33 @@ func (r *Results) add(p string, tp os.FileMode, e WalkOpErr) {
 		Error:  e,
 	})
 }
+
+// GetErrored returns a slice of WalkerResult with non-nil Error fields.
+// It iterates over the Results slice and appends any WalkerResult that
+// has a non-nil Error to the newResults slice.
+// Returns []*WalkerResult
+// Note: This method does not modify the original Results slice.
+func (r *Results) GetErrored() []*WalkerResult {
+	newResults := make([]*WalkerResult, 0)
+	for _, result := range *r {
+		if result.Error != nil {
+			newResults = append(newResults, result)
+		}
+	}
+	return newResults
+}
+
+// Get returns a slice of WalkerResult pointers with no errors.
+// It iterates through the Results slice and adds the results with no errors to
+// the newResults slice.
+// Returns []*WalkerResult
+// Note: This method does not modify the original Results slice.
+func (r *Results) Get() []*WalkerResult {
+	newResults := make([]*WalkerResult, 0)
+	for _, result := range *r {
+		if result.Error == nil {
+			newResults = append(newResults, result)
+		}
+	}
+	return newResults
+}

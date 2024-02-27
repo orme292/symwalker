@@ -16,8 +16,9 @@ var (
 	ErrStartPathIsSymlink   = errors.New("StartPath cannot be a symlink")
 	ErrStartPathIsNotDir    = errors.New("StartPath is not a directory")
 
-	ErrWalkFailedGeneral   = errors.New("error while walking directory")
-	ErrWalkPathNotReadable = errors.New("error reading from path")
+	ErrWalkFailedGeneral     = errors.New("error while walking directory")
+	ErrWalkPathNotReadable   = errors.New("error reading from path")
+	ErrWalkCouldNotListFiles = errors.New("error listing files under path")
 
 	OpsMaxDepthReached = errors.New("max depth has been reached")
 )
