@@ -5,8 +5,6 @@ import (
 	"fmt"
 )
 
-// TODO: do better: https://goplay.tools/snippet/U6lrTIN-ffA
-
 type WalkOpErr error
 
 var (

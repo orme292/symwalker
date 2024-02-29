@@ -7,11 +7,11 @@ import (
 
 func startLoop(conf *Conf) (res Results, err error) {
 	hist := make(history, 0)
-	err = dirWalk(conf, conf.StartPath, conf.Depth, res, &hist)
+	err = dirWalk(conf, conf.StartPath, conf.Depth, &res, &hist)
 	return
 }
 
-func dirWalk(conf *Conf, path string, remDepth int, res Results, hist *history) (err error) {
+func dirWalk(conf *Conf, path string, remDepth int, res *Results, hist *history) (err error) {
 	// if the remaining depth (remDepth) is 0, do not continue.
 	if remDepth == 0 {
 		return NewError(OpsMaxDepthReached, s("%q will not be walked", path))
@@ -23,11 +23,7 @@ func dirWalk(conf *Conf, path string, remDepth int, res Results, hist *history) 
 	if hist.count(path) > 1 {
 		skip = true
 	} else {
-		err = hist.add(path, emptyString)
-		// todo: determine how to handle a potential symlink loop. currently, returning an error does nothing
-		if err != nil {
-			return err // the only possible error is currently ErrWalkPotentialSymlinkLoop
-		}
+		_ = hist.add(path, emptyString)
 	}
 
 	if skip {
@@ -67,6 +63,8 @@ func dirWalk(conf *Conf, path string, remDepth int, res Results, hist *history) 
 			// todo: adjust history so that it also records the symlink that led to the path recorded in the history.
 			// That way, we can detect symbolic link loops.
 			if info.IsDir() {
+				// todo: do we need to check symlinks here?
+				_ = hist.add(filepath.Join(path, ent.Name()), emptyString)
 				// todo: walk directory
 			}
 			// todo: if file is of symlink type pointing to directory, are we following? walk it
@@ -74,6 +72,10 @@ func dirWalk(conf *Conf, path string, remDepth int, res Results, hist *history) 
 				if leadsToDir(filepath.Join(path, ent.Name())) {
 					// todo: symlink walker ran here
 				}
+			}
+			// todo: what if the target is a symlink and it was already added to the results, above?
+			if leadsToTarget(filepath.Join(path, ent.Name()), conf.TargetType) {
+				res.add(path, info.Mode().Type(), nil)
 			}
 			// todo: if file is of symlink type pointing to non-dir, are we following?
 			// outta here
