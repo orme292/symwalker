@@ -14,21 +14,21 @@ func startLoop(conf *Conf) (res Results, err error) {
 func dirWalk(conf *Conf, path string, remDepth int, res *Results, hist *history) (err error) {
 	// if the remaining depth (remDepth) is 0, do not continue.
 	if remDepth == 0 {
-		return NewError(OpsMaxDepthReached, s("%q will not be walked", path))
+		return NewError(OpsMaxDepthReached, s("depth exceeded before %q", path))
 	}
 	remDepth = depth(remDepth)
 
-	var skip bool
-	// todo: check if dir has already been walked (in history), if it has, skip = true
+	// hist.count() checks to see if the current path has already been
+	// visited. If it has, then we return instead of continuing.
 	if hist.count(path) > 1 {
-		skip = true
-	} else {
-		_ = hist.add(path, emptyString)
-	}
-
-	if skip {
 		return nil
 	}
+
+	// Otherwise, we add this to the history, with an empty referrer.
+	_ = hist.add(path, emptyString)
+
+	// Confirm that the path is readable before continuing. If not,
+	// return the error, which will be ErrWalkPathNotReadable.
 	readable, err := isReadable(path)
 	if err != nil {
 		return err // error type is already ErrWalkPathNotReadable
@@ -41,10 +41,13 @@ func dirWalk(conf *Conf, path string, remDepth int, res *Results, hist *history)
 		for _, ent := range dirents {
 			info, err := ent.Info()
 			if err != nil {
-				// todo: work out how this should report problems when reading file info
+				// If not able to get the info for a particular directory entry, then
+				// it is still added to the results struct as an irregular file. The
+				// returned error is attached. We just continue on after this.
 				res.add(path, os.ModeIrregular, err)
 				continue
 			}
+
 			// Only directory entries that match the target type will be added to the results slice.
 			// If the entry type matches conf.TargetType, then, if the entry is a Regular File (a regular
 			// file is a directory entry with no ModeType bits set), then a final GlobPattern match
@@ -60,25 +63,28 @@ func dirWalk(conf *Conf, path string, remDepth int, res *Results, hist *history)
 					res.add(path, info.Mode().Type(), nil)
 				}
 			}
-			// todo: adjust history so that it also records the symlink that led to the path recorded in the history.
-			// That way, we can detect symbolic link loops.
+
+			// If the entry is a directory, we walk it.
 			if info.IsDir() {
-				// todo: do we need to check symlinks here?
-				_ = hist.add(filepath.Join(path, ent.Name()), emptyString)
-				// todo: walk directory
-			}
-			// todo: if file is of symlink type pointing to directory, are we following? walk it
-			if info.Mode()&os.ModeSymlink == 0 {
-				if leadsToDir(filepath.Join(path, ent.Name())) {
-					// todo: symlink walker ran here
+				err = dirWalk(conf, filepath.Join(path, ent.Name()), remDepth, res, hist)
+				if err != nil {
+					return err
 				}
 			}
-			// todo: what if the target is a symlink and it was already added to the results, above?
-			if leadsToTarget(filepath.Join(path, ent.Name()), conf.TargetType) {
-				res.add(path, info.Mode().Type(), nil)
+
+			// If configured to follow symlinks, and the entry is a symlink, then we check if it
+			// ultimately leads to a directory. If it does, we walk it down the line. Otherwise,
+			// we see if the symlink leads to a file that matches the TargetType. If the TargetType
+			// is a directory, then it will be picked up by the previous statement.
+			if conf.FollowSymLinks && info.Mode()&os.ModeSymlink == 0 {
+				if leadsToDir(filepath.Join(path, ent.Name())) {
+					// todo: symlink walker ran here
+				} else {
+					if leadsToTarget(filepath.Join(path, ent.Name()), conf.TargetType) {
+						// todo: what do we do here?
+					}
+				}
 			}
-			// todo: if file is of symlink type pointing to non-dir, are we following?
-			// outta here
 		}
 	}
 	return nil
