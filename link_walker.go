@@ -6,10 +6,37 @@ import (
 )
 
 // /Users/aorme/symlinkpath => /test/path1
-// linkWalk(conf, "/Users/aorme/symlinkpath", "/Users/aorme", -1, res, hist)
-func linkWalk(conf *Conf, path string, referrer string, remDepth int, res *Results, hist *history) (err error) {
+func linkWalk(conf *Conf, link link, remDepth int, res *Results, hist *history) (err error) {
 	// todo: check depth
+	if remDepth == 0 {
+		return NewError(OpsMaxDepthReached, s("depth exceeded before %q", path))
+	}
+	remDepth = depth(remDepth)
+
 	// todo: record in history.
+	if hist.count(link.referrer) > 1 {
+		// todo: how do we handle this
+		return nil
+	}
+	_ = hist.add(path, referrer)
+
+	slink, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return err
+	}
+
+	readable, err := isReadable(slink)
+	if err != nil {
+		return err
+	}
+	if readable {
+		sinfo, err := os.Lstat(slink)
+		if err != nil {
+			return err
+		}
+		if sinfo.Mode()&
+	}
+
 	// todo: evaluate link
 	// todo: => if link evaluates to target type, record in results, continue
 	// todo: => if link evaluates to dir, walk it

@@ -7,3 +7,9 @@ const (
 
 	GlobMatchAll = "*"
 )
+
+type link struct {
+	next     string
+	base     string
+	referrer string
+}
