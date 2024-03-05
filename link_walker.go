@@ -6,35 +6,74 @@ import (
 )
 
 // /Users/aorme/symlinkpath => /test/path1
-func linkWalk(conf *Conf, link link, remDepth int, res *Results, hist *history) (err error) {
+func linkWalk(conf *Conf, basePath string, referrer string, remDepth int, res *Results, hist *history) (err error) {
 	// todo: check depth
 	if remDepth == 0 {
-		return NewError(OpsMaxDepthReached, s("depth exceeded before %q", link.next))
+		return NewError(OpsMaxDepthReached, s("depth exceeded before %q", basePath))
 	}
 	remDepth = depth(remDepth)
 
 	// todo: record in history.
-	if hist.count(link.referrer) > 1 {
-		// todo: how do we handle this
-		return nil
-	}
-	_ = hist.add(link.next, link.referrer)
 
-	slink, err := filepath.EvalSymlinks(link.next)
+	info, mode, link, err := allFileInfoNonFatal(basePath)
 	if err != nil {
-		return err
+		return
 	}
 
-	readable, err := isReadable(slink)
-	if err != nil {
-		return err
+	if hist.count(basePath) > 0 {
+		return NewError(ErrWalkPotentialSymlinkLoop, s("potential symlink loop detected at %q", basePath))
 	}
-	if readable {
-		sinfo, err := os.Lstat(slink)
+
+	err = hist.add(basePath, referrer)
+	if err != nil {
+		return // The only possible error is a SymlinkLoop warning.
+	}
+
+	if conf.TargetType.Matches(mode) {
+		res.add(basePath, mode, nil)
+	}
+
+	if info.IsDir() {
+		dirents, err := os.ReadDir(basePath)
 		if err != nil {
-			return err
+			return
 		}
+		for _, ent := range dirents {
+			einfo, err := ent.Info()
+			if err != nil {
+				res.add(filepath.Join(basePath, ent.Name()), os.ModeIrregular, err)
+				continue
+			}
 
+			if conf.TargetType.Matches(einfo.Mode()) {
+				if conf.TargetType.IsRegular() && einfo.Mode().IsRegular() {
+					if globMatch(ent.Name(), conf.GlobPattern) {
+						res.add(filepath.Join(basePath, ent.Name()), einfo.Mode(), nil)
+					}
+				} else {
+					res.add(filepath.Join(basePath, ent.Name()), einfo.Mode(), nil)
+				}
+			}
+
+			if einfo.IsDir() || einfo.Mode()&os.ModeSymlink == 0 {
+				if leadsToDir(filepath.Join(basePath, ent.Name())) ||
+					leadsToTarget(filepath.Join(basePath, ent.Name()), conf.TargetType) {
+					err = linkWalk(conf, filepath.Join(basePath, ent.Name()), basePath, remDepth, res, hist)
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
+	}
+
+	if info.Mode()&os.ModeSymlink == 0 {
+		if leadsToDir(filepath.Join(basePath, filepath.Base(link))) || leadsToTarget(filepath.Join(basePath, filepath.Base(link)), conf.TargetType) {
+			err = linkWalk(conf, filepath.Join(basePath, filepath.Base(link)), basePath, remDepth, res, hist)
+			if err != nil {
+				return
+			}
+		}
 	}
 
 	// todo: evaluate link
@@ -75,11 +114,19 @@ func leadsToTarget(path string, target WalkTarget) bool {
 		// todo: which errors could happen here? how to handle?
 		return false
 	}
-	_, err = os.Lstat(targetPath)
-	// todo: WHAT IF THE TARGET IS A SYMLINK?
+	info, err := os.Lstat(targetPath)
 	if err != nil {
 		// todo: which errors could happen here? how to handle?
 		return false
 	}
+
+	if target.Matches(info.Mode()) {
+		return true
+	}
+
+	if info.Mode()&os.ModeSymlink == 0 {
+		return leadsToTarget(targetPath, target)
+	}
+
 	return false
 }

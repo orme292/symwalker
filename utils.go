@@ -21,6 +21,11 @@ func absPathNonFatal(path string) string {
 	return path
 }
 
+func fileInfoNonFatal(path string) os.FileInfo {
+	info, _ := os.Lstat(path)
+	return info
+}
+
 func isReadable(path string) (bool, error) {
 	_, err := os.Open(absPathNonFatal(path))
 	if err != nil {
@@ -37,6 +42,19 @@ func format(path string) string {
 		clean = s("%s%s", "/", clean)
 	}
 	return strings.TrimSuffix(clean, "/")
+}
+
+func allFileInfoNonFatal(path string) (info os.FileInfo, mode os.FileMode, link string, err error) {
+	if ok, err := isReadable(path); !ok {
+		return nil, os.ModeIrregular, emptyString, err
+	}
+	info, err = os.Lstat(path)
+	if err != nil {
+		return
+	}
+	mode = info.Mode()
+	link, _ = filepath.EvalSymlinks(path)
+	return
 }
 
 func globMatch(path string, pattern string) bool {
