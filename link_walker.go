@@ -9,7 +9,7 @@ import (
 func linkWalk(conf *Conf, link link, remDepth int, res *Results, hist *history) (err error) {
 	// todo: check depth
 	if remDepth == 0 {
-		return NewError(OpsMaxDepthReached, s("depth exceeded before %q", path))
+		return NewError(OpsMaxDepthReached, s("depth exceeded before %q", link.next))
 	}
 	remDepth = depth(remDepth)
 
@@ -18,9 +18,9 @@ func linkWalk(conf *Conf, link link, remDepth int, res *Results, hist *history) 
 		// todo: how do we handle this
 		return nil
 	}
-	_ = hist.add(path, referrer)
+	_ = hist.add(link.next, link.referrer)
 
-	slink, err := filepath.EvalSymlinks(path)
+	slink, err := filepath.EvalSymlinks(link.next)
 	if err != nil {
 		return err
 	}
@@ -34,7 +34,7 @@ func linkWalk(conf *Conf, link link, remDepth int, res *Results, hist *history) 
 		if err != nil {
 			return err
 		}
-		if sinfo.Mode()&
+
 	}
 
 	// todo: evaluate link
