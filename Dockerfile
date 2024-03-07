@@ -14,6 +14,7 @@ RUN touch /tests/start/unreadable.file && chmod 000 /tests/start/unreadable.file
 RUN mkdir -p /tests/start/unreadable_dir && chmod 000 /tests/start/unreadable_dir
 RUN /bin/bash -c 'for i in {1..5}; do touch /tests/start/readable_$i.file; done'
 
+RUN mkdir -p /tests/files/{1,2,3,4,5,6,7,8,9,10}/{1,2,3,4,5,6,7,8,9,10}
 RUN mkdir -p /tests/symlink/files
 RUN ln -s /tests/start/readable_1.file /tests/symlink/files/link_to_readable_1.file
 RUN mkdir -p /tests/symlink/dirs
