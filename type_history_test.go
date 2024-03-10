@@ -30,9 +30,9 @@ func TestHistoryMethods(t *testing.T) {
 		"/users/andrew/downloads": 1,
 	}
 
-	hist := make(history)
+	hist := make(history, 0)
 	for _, path := range paths {
-		hist.add(path)
+		_ = hist.add(path, emptyString)
 	}
 
 	fmt.Printf("%v+\n\t", hist)

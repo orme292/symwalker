@@ -34,14 +34,14 @@ func linkWalk(conf *Conf, basePath string, referrer string, remDepth int, res *R
 	}
 
 	if info.IsDir() {
-		dirents, err := os.ReadDir(basePath)
-		if err != nil {
-			return
+		dirents, readErr := os.ReadDir(basePath)
+		if readErr != nil {
+			return readErr
 		}
 		for _, ent := range dirents {
-			einfo, err := ent.Info()
-			if err != nil {
-				res.add(filepath.Join(basePath, ent.Name()), os.ModeIrregular, err)
+			einfo, entryErr := ent.Info()
+			if entryErr != nil {
+				res.add(filepath.Join(basePath, ent.Name()), os.ModeIrregular, entryErr)
 				continue
 			}
 
@@ -58,9 +58,9 @@ func linkWalk(conf *Conf, basePath string, referrer string, remDepth int, res *R
 			if einfo.IsDir() || einfo.Mode()&os.ModeSymlink == 0 {
 				if leadsToDir(filepath.Join(basePath, ent.Name())) ||
 					leadsToTarget(filepath.Join(basePath, ent.Name()), conf.TargetType) {
-					err = linkWalk(conf, filepath.Join(basePath, ent.Name()), basePath, remDepth, res, hist)
-					if err != nil {
-						return err
+					entryErr = linkWalk(conf, filepath.Join(basePath, ent.Name()), basePath, remDepth, res, hist)
+					if entryErr != nil {
+						return entryErr
 					}
 				}
 			}
