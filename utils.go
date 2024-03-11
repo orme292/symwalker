@@ -31,3 +31,17 @@ func isReadable(path string) (bool, error) {
 	}
 	return true, nil
 }
+
+func resolvesToDir(path string) bool {
+	workPath, err := filepath.EvalSymlinks(f(path))
+	if err != nil {
+		return false
+	}
+	switch isType(workPath) {
+	case symTypeDir:
+		return true
+	case symTypeLink:
+		return resolvesToDir(workPath)
+	}
+	return false
+}

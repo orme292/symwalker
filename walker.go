@@ -1,7 +1,6 @@
 package swalker
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -22,7 +21,7 @@ func SymWalker(conf *SymConf) (Res WalkerResults, err error) {
 		}
 		Res = append(Res, nRes...)
 	default:
-		return Res, errors.New("StartPath should be accessible directory")
+		return Res, ErrStartPath
 	}
 	return
 }
@@ -39,7 +38,6 @@ func startWalkLoop(conf *SymConf, path string, referrer string) (Res WalkerResul
 	sType := isType(path)
 	switch sType {
 	case symTypeDir:
-		Res = append(Res, WalkerEntry{Path: path})
 		nRes, err := dirWalk(conf, path)
 		Res = append(Res, nRes...)
 		if err != nil {
@@ -58,6 +56,13 @@ func dirWalk(conf *SymConf, base string) (Res WalkerResults, err error) {
 		err = fmt.Errorf("path is not readable: %s", base)
 		return
 	}
+
+	if pathInHistory(base) {
+		fmt.Println("SYMLINK LOOP")
+		os.Exit(1)
+		return
+	}
+
 	dirents, err := os.ReadDir(base)
 	if err != nil {
 		return
@@ -70,6 +75,7 @@ func dirWalk(conf *SymConf, base string) (Res WalkerResults, err error) {
 		workPath := j(base, ent.Name())
 		switch isTypeFromInfo(info) {
 		case symTypeDir:
+			history = append(history, workPath)
 			Res = append(Res, WalkerEntry{Path: workPath})
 			nRes, err := dirWalk(conf, workPath)
 			if err != nil {
@@ -77,7 +83,8 @@ func dirWalk(conf *SymConf, base string) (Res WalkerResults, err error) {
 			}
 			Res = append(Res, nRes...)
 		case symTypeLink:
-			if resolvesToDir(workPath) {
+			if resolvesToDir(workPath) && conf.FollowSymlinks {
+				history = append(history, workPath)
 				Res = append(Res, WalkerEntry{Path: workPath})
 				nRes, err := dirWalk(conf, workPath)
 				if err != nil {
@@ -86,21 +93,6 @@ func dirWalk(conf *SymConf, base string) (Res WalkerResults, err error) {
 				Res = append(Res, nRes...)
 			}
 		}
-
 	}
 	return
-}
-
-func resolvesToDir(path string) bool {
-	workPath, err := filepath.EvalSymlinks(f(path))
-	if err != nil {
-		return false
-	}
-	switch isType(workPath) {
-	case symTypeDir:
-		return true
-	case symTypeLink:
-		return resolvesToDir(j(path, filepath.Base(workPath)))
-	}
-	return false
 }

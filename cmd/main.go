@@ -9,7 +9,7 @@ import (
 
 func main() {
 	conf := swalker.SymConf{
-		StartPath:      "/Users/aorme/github/",
+		StartPath:      "/Users/aorme/",
 		FollowSymlinks: true,
 	}
 
