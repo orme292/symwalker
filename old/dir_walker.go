@@ -1,17 +1,12 @@
-package symwalker
+package old
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 )
 
-func startLoop(conf *Conf) (res Results, err error) {
-	hist := make(history, 0)
-	err = dirWalk(conf, conf.StartPath, conf.Depth, &res, &hist)
-	return
-}
-
-func dirWalk(conf *Conf, path string, remDepth int, res *Results, hist *history) (err error) {
+func dirWalk(conf *Conf, path string, remDepth int, res Results, hist history) (err error) {
 	// if the remaining depth (remDepth) is 0, do not continue.
 	if remDepth == 0 {
 		return NewError(OpsMaxDepthReached, s("depth exceeded before %q", path))
@@ -34,11 +29,13 @@ func dirWalk(conf *Conf, path string, remDepth int, res *Results, hist *history)
 		return err // error type is already ErrWalkPathNotReadable
 	}
 	if readable {
+		fmt.Println("WALKING: ", path)
 		dirents, err := os.ReadDir(path)
 		if err != nil {
 			return NewError(ErrWalkCouldNotListFiles, err.Error())
 		}
 		for _, ent := range dirents {
+			fmt.Println("SUB WALK: ", ent.Name())
 			info, err := ent.Info()
 			if err != nil {
 				// If not able to get the info for a particular directory entry, then
@@ -48,6 +45,7 @@ func dirWalk(conf *Conf, path string, remDepth int, res *Results, hist *history)
 				continue
 			}
 
+			fmt.Println("HERE1")
 			// Only directory entries that match the target type will be added to the results slice.
 			// If the entry type matches conf.TargetType, then, if the entry is a Regular File (a regular
 			// file is a directory entry with no ModeType bits set), then a final GlobPattern match
@@ -57,13 +55,14 @@ func dirWalk(conf *Conf, path string, remDepth int, res *Results, hist *history)
 			if conf.TargetType.Matches(info.Mode()) {
 				if conf.TargetType.IsRegular() && info.Mode().IsRegular() {
 					if globMatch(ent.Name(), conf.GlobPattern) {
-						res.add(path, info.Mode().Type(), nil)
+						res.add(path, info.Mode(), nil)
 					}
 				} else {
-					res.add(path, info.Mode().Type(), nil)
+					res.add(path, info.Mode(), nil)
 				}
 			}
 
+			fmt.Println("HERE2")
 			// If the entry is a directory, we walk it.
 			if info.IsDir() {
 				err = dirWalk(conf, filepath.Join(path, ent.Name()), remDepth, res, hist)
@@ -72,11 +71,12 @@ func dirWalk(conf *Conf, path string, remDepth int, res *Results, hist *history)
 				}
 			}
 
+			fmt.Println("HERE3")
 			// If configured to follow symlinks, and the entry is a symlink, then we check if it
 			// ultimately leads to a directory. If it does, we walk it down the line. Otherwise,
 			// we see if the symlink leads to a file that matches the TargetType. If the TargetType
 			// is a directory, then it will be picked up by the previous statement.
-			if conf.FollowSymLinks && info.Mode()&os.ModeSymlink == 0 {
+			if conf.FollowSymLinks && info.Mode()&os.ModeSymlink == os.ModeSymlink {
 				if leadsToDir(filepath.Join(path, ent.Name())) {
 					// todo: symlink walker ran here
 				} else {
@@ -85,6 +85,9 @@ func dirWalk(conf *Conf, path string, remDepth int, res *Results, hist *history)
 					}
 				}
 			}
+
+			fmt.Println("HERE4")
+			continue
 		}
 	}
 	return nil

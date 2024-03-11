@@ -1,4 +1,4 @@
-package symwalker
+package old
 
 import (
 	"fmt"

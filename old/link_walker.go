@@ -1,6 +1,7 @@
-package symwalker
+package old
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -33,6 +34,7 @@ func linkWalk(conf *Conf, basePath string, referrer string, remDepth int, res *R
 		res.add(basePath, mode, nil)
 	}
 
+	fmt.Println("LINK WALK: ", basePath)
 	if info.IsDir() {
 		dirents, readErr := os.ReadDir(basePath)
 		if readErr != nil {

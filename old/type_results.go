@@ -1,6 +1,7 @@
-package symwalker
+package old
 
 import (
+	"fmt"
 	"os"
 )
 
@@ -22,11 +23,14 @@ type Results []*WalkerResult
 // Parameter tp is the file mode of the result
 // Parameter e is the WalkOpErr error of the result
 func (r *Results) add(p string, tp os.FileMode, e WalkOpErr) {
-	*r = append(*r, &WalkerResult{
+	fmt.Println("ADD RESULT")
+	wr := WalkerResult{
 		Path:   p,
-		IsType: tp,
-		Error:  e,
-	})
+		IsType: os.ModeIrregular,
+		Error:  NewError(ErrWalkFailedGeneral, ""),
+	}
+	*r = append(*r, &wr)
+	fmt.Println("END ADD RESULT")
 }
 
 // GetErrored returns a slice of WalkerResult with non-nil Error fields.
