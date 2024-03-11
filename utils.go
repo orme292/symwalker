@@ -1,9 +1,23 @@
 package swalker
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 )
+
+func s(f string, v ...interface{}) string {
+	return fmt.Sprintf(f, v...)
+}
+
+func j(start string, end string) string {
+	return filepath.Join(start, end)
+}
+
+func f(path string) string {
+	path, _ = filepath.Abs(filepath.Clean(path))
+	return path
+}
 
 func isReadable(path string) (bool, error) {
 	path, err := filepath.Abs(filepath.Clean(path))

@@ -18,8 +18,8 @@ func main() {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
-	for i := range res {
-		fmt.Printf("Path: %s\n", res[i].Path)
+	for _, entry := range res {
+		fmt.Printf("Path: %s\n", entry.Path)
 	}
-	os.Exit(1)
+	os.Exit(0)
 }
