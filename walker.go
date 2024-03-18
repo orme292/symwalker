@@ -2,6 +2,7 @@ package swalker
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -15,7 +16,7 @@ func SymWalker(conf *SymConf) (Res WalkerResults, err error) {
 	switch sType {
 	case symTypeDir:
 		fmt.Println("Start WalkLoop")
-		nRes, nErr := startWalkLoop(conf, conf.StartPath, "")
+		nRes, nErr := startWalkLoop(conf, conf.StartPath)
 		if nErr != nil {
 			return
 		}
@@ -26,7 +27,7 @@ func SymWalker(conf *SymConf) (Res WalkerResults, err error) {
 	return
 }
 
-func startWalkLoop(conf *SymConf, path string, referrer string) (Res WalkerResults, err error) {
+func startWalkLoop(conf *SymConf, path string) (Res WalkerResults, err error) {
 	readable, err := isReadable(f(path))
 	if err != nil {
 		return
@@ -58,11 +59,12 @@ func dirWalk(conf *SymConf, base string) (Res WalkerResults, err error) {
 	}
 
 	if pathInHistory(base) {
-		fmt.Println("SYMLINK LOOP")
-		os.Exit(1)
 		return
 	}
 
+	if conf.Noisy {
+		log.Println("Reading ", base)
+	}
 	dirents, err := os.ReadDir(base)
 	if err != nil {
 		return

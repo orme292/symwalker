@@ -9,8 +9,9 @@ import (
 
 func main() {
 	conf := swalker.SymConf{
-		StartPath:      "/Users/aorme/",
+		StartPath:      "/Users/aorme",
 		FollowSymlinks: true,
+		Noisy:          true,
 	}
 
 	res, err := swalker.SymWalker(&conf)

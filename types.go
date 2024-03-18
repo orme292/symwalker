@@ -7,6 +7,7 @@ import (
 type SymConf struct {
 	StartPath      string
 	FollowSymlinks bool
+	Noisy          bool
 }
 
 type WalkerEntry struct {
@@ -21,11 +22,11 @@ var history History
 
 func pathInHistory(path string) bool {
 	count := 0
-	for _, entry := range history {
-		if entry == path {
-			count++
+	for i := 0; i < len(history); i++ {
+		if path == history[i] {
+			count += 1
 		}
-		if count > 1 {
+		if count == 2 {
 			return true
 		}
 	}
