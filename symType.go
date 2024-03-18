@@ -20,7 +20,7 @@ func (st symType) string() string {
 	return fmt.Sprintf("%s", st)
 }
 
-func isType(path string) symType {
+func isPathType(path string) symType {
 	path, err := filepath.Abs(filepath.Clean(path))
 	if err != nil {
 		return symTypeErrored
@@ -31,10 +31,10 @@ func isType(path string) symType {
 		return symTypeErrored
 	}
 
-	return isTypeFromInfo(info)
+	return pathTypeFromInfo(info)
 }
 
-func isTypeFromInfo(info os.FileInfo) (st symType) {
+func pathTypeFromInfo(info os.FileInfo) (st symType) {
 	if info.IsDir() {
 		return symTypeDir
 	}

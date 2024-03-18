@@ -12,7 +12,7 @@ func SymWalker(conf *SymConf) (Res WalkerResults, err error) {
 	if err != nil {
 		return nil, err
 	}
-	sType := isType(conf.StartPath)
+	sType := isPathType(conf.StartPath)
 	switch sType {
 	case symTypeDir:
 		fmt.Println("Start WalkLoop")
@@ -36,7 +36,7 @@ func startWalkLoop(conf *SymConf, path string) (Res WalkerResults, err error) {
 		return Res, fmt.Errorf("path is not readable: %s", path)
 	}
 
-	sType := isType(path)
+	sType := isPathType(path)
 	switch sType {
 	case symTypeDir:
 		nRes, err := dirWalk(conf, path)
@@ -75,7 +75,7 @@ func dirWalk(conf *SymConf, base string) (Res WalkerResults, err error) {
 			continue
 		}
 		workPath := j(base, ent.Name())
-		switch isTypeFromInfo(info) {
+		switch pathTypeFromInfo(info) {
 		case symTypeDir:
 			history = append(history, workPath)
 			Res = append(Res, WalkerEntry{Path: workPath})

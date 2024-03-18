@@ -25,19 +25,26 @@ func isReadable(path string) (bool, error) {
 		return false, err
 	}
 
-	_, err = os.Open(path)
+	f, err := os.Open(path)
+	defer f.Close()
 	if err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
+// resolvesToDir checks if the given path resolves to a directory.
+// It resolves symbolic links and recursively checks if the resolved path is a directory.
+// If the resolved path is a directory, it returns true.
+// If the resolved path is a symbolic link to a directory, it recursively calls itself with the resolved path.
+// Otherwise, it returns false.
 func resolvesToDir(path string) bool {
 	workPath, err := filepath.EvalSymlinks(f(path))
 	if err != nil {
 		return false
 	}
-	switch isType(workPath) {
+
+	switch isPathType(workPath) {
 	case symTypeDir:
 		return true
 	case symTypeLink:
