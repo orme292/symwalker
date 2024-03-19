@@ -58,9 +58,20 @@ func dirWalk(conf *SymConf, base string) (Res WalkerResults, err error) {
 		return
 	}
 
-	if pathInHistory(base) {
+	baseInfo, err := os.Lstat(base)
+	if err != nil {
 		return
 	}
+	if pathTypeFromInfo(baseInfo) == symTypeLink {
+		if symlinkTargetInHistory(base) {
+			return
+		}
+	} else {
+		if pathInHistory(base) {
+			return
+		}
+	}
+	history = append(history, base)
 
 	if conf.Noisy {
 		log.Println("Reading ", base)
@@ -77,7 +88,6 @@ func dirWalk(conf *SymConf, base string) (Res WalkerResults, err error) {
 		workPath := j(base, ent.Name())
 		switch pathTypeFromInfo(info) {
 		case symTypeDir:
-			history = append(history, workPath)
 			Res = append(Res, WalkerEntry{Path: workPath})
 			nRes, err := dirWalk(conf, workPath)
 			if err != nil {
@@ -86,7 +96,9 @@ func dirWalk(conf *SymConf, base string) (Res WalkerResults, err error) {
 			Res = append(Res, nRes...)
 		case symTypeLink:
 			if resolvesToDir(workPath) && conf.FollowSymlinks {
-				history = append(history, workPath)
+				if symlinkTargetInHistory(workPath) {
+					continue
+				}
 				Res = append(Res, WalkerEntry{Path: workPath})
 				nRes, err := dirWalk(conf, workPath)
 				if err != nil {
