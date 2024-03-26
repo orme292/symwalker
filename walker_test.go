@@ -1,7 +1,6 @@
 package swalker
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -18,44 +17,65 @@ func TestSymWalker(t *testing.T) {
 		t.Fail()
 	}
 
-	for _, entry := range res {
-		fmt.Printf("Path: %s\n", entry.Path)
+	pass := checkTestResults(res, t)
+	if !pass {
+		t.Fail()
 	}
 
 }
 
 func checkTestResults(wr WalkerResults, t *testing.T) bool {
-	lenExpected := 24
-	if len(wr) != lenExpected {
-		t.Logf("checkTestResults: wr length wrong. expected %d, got %d", lenExpected, len(wr))
-		return false
+	expected := make(map[string]bool)
+	expected["/tests/users/andrew"] = false
+	expected["/tests/users/andrew/downloads"] = false
+	expected["/tests/users/andrew/documents"] = false
+	expected["/tests/users/andrew/pictures"] = false
+	expected["/tests/users/brian"] = false
+	expected["/tests/users/brian/downloads"] = false
+	expected["/tests/users/brian/documents"] = false
+	expected["/tests/users/brian/pictures"] = false
+	expected["/tests/users/carolyn"] = false
+	expected["/tests/users/carolyn/downloads"] = false
+	expected["/tests/users/carolyn/documents"] = false
+	expected["/tests/users/carolyn/pictures"] = false
+	expected["/tests/users/david"] = false
+	expected["/tests/users/david/downloads"] = false
+	expected["/tests/users/david/documents"] = false
+	expected["/tests/users/david/pictures"] = false
+	expected["/tests/users/erin"] = false
+	expected["/tests/users/erin/downloads"] = false
+	expected["/tests/users/erin/documents"] = false
+	expected["/tests/users/erin/pictures"] = false
+	expected["/tests/users/frank"] = false
+	expected["/tests/users/frank/downloads"] = false
+	expected["/tests/users/frank/documents"] = false
+	expected["/tests/users/frank/pictures"] = false
+	expected["/tests/users/andrew/others"] = false
+	expected["/tests/users/andrew/others/more"] = false
+	expected["/tests/users/andrew/others/more/directories"] = false
+	expected["/tests/users/andrew/others/more/directories/to"] = false
+	expected["/tests/users/andrew/others/more/directories/to/find"] = false
+
+	var pass = true
+
+	for _, entry := range wr {
+		if _, ok := expected[entry.Path]; ok {
+			if expected[entry.Path] == true {
+				t.Errorf("Unexpected duplicate: %s", entry.Path)
+				pass = false
+			} else if expected[entry.Path] == false {
+				expected[entry.Path] = true
+			}
+		} else {
+			t.Errorf("Unexpected Path: %s", entry.Path)
+		}
 	}
 
-	expected := make(map[string]int)
-	expected["/tests/users/andrew"] = 0
-	expected["/tests/users/andrew/downloads"] = 0
-	expected["/tests/users/andrew/documents"] = 0
-	expected["/tests/users/andrew/pictures"] = 0
-	expected["/tests/users/brian"] = 0
-	expected["/tests/users/brian/downloads"] = 0
-	expected["/tests/users/brian/documents"] = 0
-	expected["/tests/users/brian/pictures"] = 0
-	expected["/tests/users/carolyn"] = 0
-	expected["/tests/users/carolyn/downloads"] = 0
-	expected["/tests/users/carolyn/documents"] = 0
-	expected["/tests/users/carolyn/pictures"] = 0
-	expected["/tests/users/david"] = 0
-	expected["/tests/users/david/downloads"] = 0
-	expected["/tests/users/david/documents"] = 0
-	expected["/tests/users/david/pictures"] = 0
-	expected["/tests/users/erin"] = 0
-	expected["/tests/users/erin/downloads"] = 0
-	expected["/tests/users/erin/documents"] = 0
-	expected["/tests/users/erin/pictures"] = 0
-	expected["/tests/users/frank"] = 0
-	expected["/tests/users/frank/downloads"] = 0
-	expected["/tests/users/frank/documents"] = 0
-	expected["/tests/users/frank/pictures"] = 0
-
-	return true
+	for index := range expected {
+		if expected[index] == false {
+			t.Errorf("Missing Path: %s", index)
+			pass = false
+		}
+	}
+	return pass
 }
