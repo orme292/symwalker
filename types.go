@@ -17,6 +17,8 @@ type WalkerEntry struct {
 
 type WalkerResults []WalkerEntry
 
+type Pending []WalkerEntry
+
 type History []string
 
 var history History
