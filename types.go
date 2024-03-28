@@ -12,15 +12,15 @@ type SymConf struct {
 }
 
 type WalkerEntry struct {
-	Path string
+	Path   string
+	Marked bool
 }
 
 type WalkerResults []WalkerEntry
 
-type Pending []WalkerEntry
-
 type History []string
 
+var p Pending
 var history History
 
 func pathInHistory(path string) bool {
