@@ -19,9 +19,10 @@ type WalkerEntry struct {
 type WalkerResults []WalkerEntry
 
 type History []string
+type Pending []WalkerEntry
 
-var p Pending
 var history History
+var pending Pending
 
 func pathInHistory(path string) bool {
 	count := 0

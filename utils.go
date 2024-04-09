@@ -45,9 +45,9 @@ func resolvesToDir(path string) bool {
 	}
 
 	switch isPathType(workPath) {
-	case symTypeDir:
+	case entTypeDir:
 		return true
-	case symTypeLink:
+	case entTypeLink:
 		return resolvesToDir(workPath)
 	}
 	return false

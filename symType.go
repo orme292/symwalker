@@ -6,43 +6,43 @@ import (
 	"path/filepath"
 )
 
-type symType string
+type entType string
 
 var (
-	symTypeDir     symType = "dir"
-	symTypeLink    symType = "link"
-	symTypeFile    symType = "file"
-	symTypeOther   symType = "other"
-	symTypeErrored symType = "errored"
+	entTypeDir     entType = "dir"
+	entTypeLink    entType = "link"
+	entTypeFile    entType = "file"
+	entTypeOther   entType = "other"
+	entTypeErrored entType = "errored"
 )
 
-func (st symType) string() string {
+func (st entType) string() string {
 	return fmt.Sprintf("%s", st)
 }
 
-func isPathType(path string) symType {
+func isPathType(path string) entType {
 	path, err := filepath.Abs(filepath.Clean(path))
 	if err != nil {
-		return symTypeErrored
+		return entTypeErrored
 	}
 
 	info, err := os.Lstat(path)
 	if err != nil {
-		return symTypeErrored
+		return entTypeErrored
 	}
 
 	return pathTypeFromInfo(info)
 }
 
-func pathTypeFromInfo(info os.FileInfo) (st symType) {
+func pathTypeFromInfo(info os.FileInfo) (st entType) {
 	if info.IsDir() {
-		return symTypeDir
+		return entTypeDir
 	}
 	if info.Mode()&os.ModeSymlink == os.ModeSymlink {
-		return symTypeLink
+		return entTypeLink
 	}
 	if info.Mode().IsRegular() {
-		return symTypeFile
+		return entTypeFile
 	}
-	return symTypeOther
+	return entTypeOther
 }
