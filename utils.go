@@ -44,7 +44,7 @@ func resolvesToDir(path string) bool {
 		return false
 	}
 
-	switch isPathType(workPath) {
+	switch isEntType(workPath) {
 	case entTypeDir:
 		return true
 	case entTypeLink:

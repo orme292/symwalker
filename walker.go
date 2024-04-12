@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 )
 
-func SymWalker(conf *SymConf) (Results WalkerResults, err error) {
+func SymWalker(conf *SymConf) (results ResultEntries, err error) {
 	conf.StartPath, err = filepath.Abs(filepath.Clean(conf.StartPath))
 	if err != nil {
 		return nil, err
@@ -18,26 +18,26 @@ func SymWalker(conf *SymConf) (Results WalkerResults, err error) {
 		return
 	}
 
-	Results = append(Results, loopResults...)
+	results = append(results, loopResults...)
 
 	return
 }
 
-func startWalkLoop(conf *SymConf, path string) (Results WalkerResults, err error) {
+func startWalkLoop(conf *SymConf, path string) (results ResultEntries, err error) {
 	readable, err := isReadable(f(path))
 	if err != nil {
 		return
 	}
 	if !readable {
-		return Results, fmt.Errorf("path is not readable: %s", path)
+		return results, fmt.Errorf("path is not readable: %s", path)
 	}
 
-	pathType := isPathType(path)
+	pathType := isEntType(path)
 	switch pathType {
 	case entTypeDir:
 
 		nRes, err := dirWalk(conf, path)
-		Results = append(Results, nRes...)
+		results = append(results, nRes...)
 		if err != nil {
 			break
 		}
@@ -47,7 +47,7 @@ func startWalkLoop(conf *SymConf, path string) (Results WalkerResults, err error
 	return
 }
 
-func dirWalk(conf *SymConf, base string) (Results WalkerResults, err error) {
+func dirWalk(conf *SymConf, base string) (results ResultEntries, err error) {
 	readable, err := isReadable(f(base))
 	if err != nil {
 		return
@@ -57,7 +57,7 @@ func dirWalk(conf *SymConf, base string) (Results WalkerResults, err error) {
 		return
 	}
 
-	history = append(history, base)
+	conf.history = append(conf.history, base)
 
 	if conf.Noisy {
 		log.Println("Reading ", base)
@@ -76,20 +76,21 @@ func dirWalk(conf *SymConf, base string) (Results WalkerResults, err error) {
 
 		workPath := j(base, ent.Name())
 
-		switch pathTypeFromInfo(info) {
+		switch entTypeFromInfo(info) {
 		case entTypeDir:
 
-			Results = append(Results, WalkerEntry{Path: workPath})
-			nRes, err := dirWalk(conf, workPath)
+			results.add(workPath)
+			entries, err := dirWalk(conf, workPath)
 			if err != nil {
 				break
 			}
-			Results = append(Results, nRes...)
+			results.combine(entries)
 
 		case entTypeLink:
 
 			if conf.FollowSymlinks {
-				pending = append(pending, WalkerEntry{Path: workPath})
+				log.Println("PENDING: ", workPath)
+				conf.pending.add(workPath)
 			}
 
 		}

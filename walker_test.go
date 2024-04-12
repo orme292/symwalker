@@ -24,7 +24,7 @@ func TestSymWalker(t *testing.T) {
 
 }
 
-func checkTestResults(wr WalkerResults, t *testing.T) bool {
+func checkTestResults(wr ResultEntries, t *testing.T) bool {
 	expected := make(map[string]bool)
 	expected["/tests/users/andrew"] = false
 	expected["/tests/users/andrew/downloads"] = false
@@ -64,6 +64,7 @@ func checkTestResults(wr WalkerResults, t *testing.T) bool {
 				t.Errorf("Unexpected duplicate: %s", entry.Path)
 				pass = false
 			} else if expected[entry.Path] == false {
+				t.Logf("OK: %s", entry.Path)
 				expected[entry.Path] = true
 			}
 		} else {
