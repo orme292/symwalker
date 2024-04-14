@@ -11,7 +11,7 @@ func s(f string, v ...interface{}) string {
 }
 
 func j(start string, end string) string {
-	return filepath.Join(start, end)
+	return filepath.Clean(filepath.Join(start, end))
 }
 
 func f(path string) string {
@@ -44,10 +44,10 @@ func resolvesToDir(path string) bool {
 		return false
 	}
 
-	switch isPathType(workPath) {
-	case symTypeDir:
+	switch isEntType(workPath) {
+	case entTypeDir:
 		return true
-	case symTypeLink:
+	case entTypeLink:
 		return resolvesToDir(workPath)
 	}
 	return false
