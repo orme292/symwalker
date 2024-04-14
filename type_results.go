@@ -1,14 +1,5 @@
 package swalker
 
-type DirEntry struct {
-	Path   string
-	Marked bool
-}
-
-func (de *DirEntry) Mark() {
-	de.Marked = true
-}
-
 type ResultEntries []DirEntry
 
 func (re *ResultEntries) add(p string) {
@@ -30,6 +21,6 @@ func (re *ResultEntries) pathExists(p string) bool {
 	return false
 }
 
-func (re *ResultEntries) PopOut(index int) ResultEntries {
-	return append((*re)[:index], (*re)[index+1:]...)
+func (re *ResultEntries) PopOut(index int) {
+	*re = append((*re)[:index], (*re)[index+1:]...)
 }

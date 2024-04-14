@@ -1,18 +1,21 @@
 package swalker
 
-type HistoryEntries []string
+import (
+	"log"
+)
 
-func (he *HistoryEntries) add(p string) {
-	if !he.pathExists(p) {
-		*he = append(*he, p)
-	}
-}
+type historyEntries []*string
 
-func (he *HistoryEntries) pathExists(p string) bool {
-	for _, entry := range *he {
-		if entry == p {
+func (he *historyEntries) pathExists(path string) bool {
+	for index := range *he {
+		if *(*he)[index] == path {
+			log.Println("history search (found): ", path)
 			return true
 		}
 	}
 	return false
+}
+
+func (he *historyEntries) add(path string) {
+	*he = append(*he, &path)
 }

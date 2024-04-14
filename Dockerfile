@@ -13,8 +13,10 @@ RUN /bin/bash -c 'for i in {1..5}; do touch /tests/users/{andrew,brian,carolyn,d
 RUN /bin/bash -c 'for i in {1..6}; do touch /tests/users/{andrew,brian,carolyn,david,erin,frank}/documents/$i-report.doc; done'
 RUN /bin/bash -c 'for i in a b c d e f g; do touch /tests/users/{andrew,brian,carolyn,david,erin,frank}/downloads/$i.part; done'
 RUN /bin/bash -c 'mkdir -p /tests2/more/directories/to/find'
+RUN /bin/bash -c 'touch /file.txt'
 RUN /bin/bash -c 'ln -s /tests/users /tests/users/frank/documents/rogue'
 RUN /bin/bash -c 'ln -s /tests2/ /tests/users/andrew/others'
+RUN /bin/bash -c 'ln -s /file.txt /tests/users/andrew/linkedfile'
 
 RUN ls -ahl /tests/users/andrew/downloads
 RUN ls -ahl /tests/users/frank/documents

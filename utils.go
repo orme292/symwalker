@@ -11,7 +11,7 @@ func s(f string, v ...interface{}) string {
 }
 
 func j(start string, end string) string {
-	return filepath.Join(start, end)
+	return filepath.Clean(filepath.Join(start, end))
 }
 
 func f(path string) string {
