@@ -23,15 +23,12 @@ func SymWalker(conf *SymConf) (results ResultEntries, err error) {
 
 func startWalkLoop(conf *SymConf) (err error) {
 	readable, err := isReadable(f(conf.StartPath))
-	if err != nil {
-		return
-	}
-	if !readable {
+	if err != nil || !readable {
 		return fmt.Errorf("path is not readable: %s", conf.StartPath)
 	}
 
-	pathType := isEntType(conf.StartPath)
-	switch pathType {
+	startPathEntType := isEntType(conf.StartPath)
+	switch startPathEntType {
 	case entTypeDir:
 
 		err := dirWalk(conf, conf.StartPath)
@@ -39,103 +36,90 @@ func startWalkLoop(conf *SymConf) (err error) {
 			break
 		}
 
-		for index := range conf.pending {
-			if conf.pending[index].Marked == false {
-				fmt.Println("pending: ", conf.pending[index].Path)
-			} else {
-				fmt.Println("marked pending entry skipped")
-			}
-		}
+		_ = startPendingWalkLoop(conf)
 
-		for index := range conf.history {
-			fmt.Println("History Entry: ", *conf.history[index])
-		}
-
-		_ = startPendingWalk(conf)
-		// deal with pending entries
-
-		for index := range conf.history {
-			fmt.Println("Post Pending History Entry: ", *conf.history[index])
-		}
 	}
 	return
 }
 
 func dirWalk(conf *SymConf, base string) (err error) {
 	readable, err := isReadable(f(base))
-	if err != nil {
-		return
-	}
-	if !readable {
+	if err != nil || !readable {
 		err = fmt.Errorf("path is not readable: %s", base)
 		return
 	}
 
 	// if the base path already exists in the history, then exit.
 	// otherwise, add it to the history
-	if conf.history.pathExists(base) {
-		log.Println("LOOPED: ", base)
-		return
+	if conf.history.pathAddedWithExistsCheck(base) == false {
+		noise(conf.Noisy, "Loop found: %s", base)
 	}
-	log.Println("History Add (dirWalk): ", base)
-	conf.history = append(conf.history, &base)
 
-	// if noisy, print log message
-	if conf.Noisy {
-		log.Println("Reading ", base)
-	}
+	noise(conf.Noisy, "Reading %s", base)
 
 	// read the directory
-	dirEnts, err := os.ReadDir(base)
+	dirEntries, err := os.ReadDir(base)
 	if err != nil {
 		return
 	}
 
-	for _, ent := range dirEnts {
-		info, err := os.Lstat(j(base, ent.Name()))
+	for _, entry := range dirEntries {
+		workPath := j(base, entry.Name())
+		err = processDirEntry(conf, workPath)
 		if err != nil {
+			noise(conf.Noisy, "Error processing: %s (%s)", workPath, err.Error())
 			continue
 		}
-
-		workPath := j(base, ent.Name())
-
-		switch entTypeFromInfo(info) {
-		case entTypeDir:
-
-			conf.results.add(workPath)
-			err := dirWalk(conf, workPath)
-			if err != nil {
-				break
-			}
-
-		case entTypeLink:
-
-			if conf.FollowSymlinks {
-				if resolvesToDir(workPath) {
-					log.Println("PENDING: ", workPath)
-					conf.pending.add(workPath)
-				} else {
-					log.Println("pending skip: ", workPath)
-				}
-			}
-
-		}
-
 	}
 
 	return
 }
 
-func startPendingWalk(conf *SymConf) (err error) {
+func processDirEntry(conf *SymConf, path string) error {
+	info, err := os.Lstat(path)
+	if err != nil {
+		return err
+	}
+
+	switch entTypeFromInfo(info) {
+	case entTypeDir:
+
+		conf.results.add(path)
+		err := dirWalk(conf, path)
+		if err != nil {
+			break
+		}
+
+	case entTypeLink:
+
+		if conf.FollowSymlinks {
+			if resolvesToDir(path) {
+				noise(conf.Noisy, "Link pending: %s (>>dir)", path)
+				conf.pending.add(path)
+			} else {
+				noise(conf.Noisy, "Link skipped: %s (!>>dir)", path)
+			}
+		}
+	}
+
+	return nil
+}
+
+func startPendingWalkLoop(conf *SymConf) (err error) {
+	endlessLoopProtection := conf.maxLoops
 	for {
 		for index := range conf.pending {
 			if conf.pending[index].Marked == false {
 				err = pendingWalk(conf, index)
 			}
 		}
-		if !conf.pending.unmarkedEntriesExist() {
+		if !conf.pending.unmarkedEntriesExist() || endlessLoopProtection <= 0 {
+			if endlessLoopProtection <= 0 {
+				noise(conf.Noisy, "Loop protection breached: %d", conf.maxLoops)
+			}
 			break
 		}
+		endlessLoopProtection--
 	}
 
 	return nil
