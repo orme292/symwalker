@@ -2,6 +2,7 @@ package swalker
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -17,6 +18,12 @@ func j(start string, end string) string {
 func f(path string) string {
 	path, _ = filepath.Abs(filepath.Clean(path))
 	return path
+}
+
+func noise(noisy bool, f string, v ...interface{}) {
+	if noisy {
+		log.Printf(f, v...)
+	}
 }
 
 func isReadable(path string) (bool, error) {

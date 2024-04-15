@@ -5,13 +5,14 @@ import (
 )
 
 func TestSymWalker(t *testing.T) {
-	conf := SymConf{
-		StartPath:      "/tests/users",
-		FollowSymlinks: true,
-		Noisy:          false,
-	}
+	conf := NewSymConf(
+		WithStartPath("/tests/users"),
+		FollowSymLinks(),
+		WithLogging(),
+		OverridesMaxLoopsValue(MILLION),
+	)
 
-	res, err := SymWalker(&conf)
+	res, err := SymWalker(conf)
 	if err != nil {
 		t.Errorf("SymWalker returned an error: %s", err.Error())
 		t.Fail()
