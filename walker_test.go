@@ -9,7 +9,7 @@ func TestSymWalker(t *testing.T) {
 	conf := NewSymConf(
 		WithStartPath("/tests/users"),
 		FollowsSymLinks(),
-		//WithLogging(),
+		WithLogging(),
 	)
 
 	res, err := SymWalker(conf)

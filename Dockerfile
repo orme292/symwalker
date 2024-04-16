@@ -23,7 +23,10 @@ RUN /bin/bash -c 'ln -s /tests2/ /tests/users/andrew/others'
 RUN /bin/bash -c 'ln -s /file.txt /tests/users/andrew/linkedfile'
 RUN /bin/bash -c 'ln -s /tests3 /tests/users/docs1'
 RUN /bin/bash -c 'ln -s /tests3 /tests/users/docs2'
-RUN /bin/bash -c 'ln -s /tests/users/docs1 /tests3/more/rogue'
+
+# These create symlink loops, there should be no results from these paths
+RUN /bin/bash -c 'ln -s /tests3 /tests/users/docs1/rogue'
+RUN /bin/bash -c 'ln -s /tests/users /tests/users/andrew/downloads/loop'
 
 RUN ls -ahl /tests/users/andrew/downloads
 RUN ls -ahl /tests/users/frank/documents
