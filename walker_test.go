@@ -5,11 +5,11 @@ import (
 )
 
 func TestSymWalker(t *testing.T) {
+
 	conf := NewSymConf(
 		WithStartPath("/tests/users"),
-		FollowSymLinks(),
+		FollowsSymLinks(),
 		WithLogging(),
-		OverridesMaxLoopsValue(MILLION),
 	)
 
 	res, err := SymWalker(conf)
@@ -25,8 +25,10 @@ func TestSymWalker(t *testing.T) {
 
 }
 
-func checkTestResults(wr ResultEntries, t *testing.T) bool {
+func checkTestResults(r Results, t *testing.T) bool {
+
 	expected := make(map[string]bool)
+	expected["/tests/users"] = false
 	expected["/tests/users/andrew"] = false
 	expected["/tests/users/andrew/downloads"] = false
 	expected["/tests/users/andrew/documents"] = false
@@ -42,6 +44,15 @@ func checkTestResults(wr ResultEntries, t *testing.T) bool {
 	expected["/tests/users/david"] = false
 	expected["/tests/users/david/downloads"] = false
 	expected["/tests/users/david/documents"] = false
+	expected["/tests/users/david/documents/rogue"] = false
+	expected["/tests/users/david/documents/rogue/documents"] = false
+	expected["/tests/users/david/documents/rogue/downloads"] = false
+	expected["/tests/users/david/documents/rogue/others"] = false
+	expected["/tests/users/david/documents/rogue/others/more"] = false
+	expected["/tests/users/david/documents/rogue/others/more/directories"] = false
+	expected["/tests/users/david/documents/rogue/others/more/directories/to"] = false
+	expected["/tests/users/david/documents/rogue/others/more/directories/to/find"] = false
+	expected["/tests/users/david/documents/rogue/pictures"] = false
 	expected["/tests/users/david/pictures"] = false
 	expected["/tests/users/erin"] = false
 	expected["/tests/users/erin/downloads"] = false
@@ -63,17 +74,17 @@ func checkTestResults(wr ResultEntries, t *testing.T) bool {
 
 	var pass = true
 
-	for _, entry := range wr {
-		if _, ok := expected[entry.Path]; ok {
-			if expected[entry.Path] == true {
-				t.Errorf("Unexpected duplicate: %s", entry.Path)
+	for _, dir := range r.Dirs {
+		if _, ok := expected[dir.Path]; ok {
+			if expected[dir.Path] == true {
+				t.Errorf("Unexpected duplicate: %s", dir.Path)
 				pass = false
-			} else if expected[entry.Path] == false {
-				t.Logf("OK: %s", entry.Path)
-				expected[entry.Path] = true
+			} else if expected[dir.Path] == false {
+				t.Logf("OK: %s", dir.Path)
+				expected[dir.Path] = true
 			}
 		} else {
-			t.Errorf("Unexpected Path: %s", entry.Path)
+			t.Errorf("Unexpected Path: %s", dir.Path)
 		}
 	}
 
@@ -84,4 +95,5 @@ func checkTestResults(wr ResultEntries, t *testing.T) bool {
 		}
 	}
 	return pass
+
 }

@@ -1,21 +1,16 @@
 package swalker
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 )
 
-func s(f string, v ...interface{}) string {
-	return fmt.Sprintf(f, v...)
-}
-
-func j(start string, end string) string {
+func joinUnsafe(start string, end string) string {
 	return filepath.Clean(filepath.Join(start, end))
 }
 
-func f(path string) string {
+func fullPathUnsafe(path string) string {
 	path, _ = filepath.Abs(filepath.Clean(path))
 	return path
 }
@@ -38,24 +33,4 @@ func isReadable(path string) (bool, error) {
 		return false, err
 	}
 	return true, nil
-}
-
-// resolvesToDir checks if the given path resolves to a directory.
-// It resolves symbolic links and recursively checks if the resolved path is a directory.
-// If the resolved path is a directory, it returns true.
-// If the resolved path is a symbolic link to a directory, it recursively calls itself with the resolved path.
-// Otherwise, it returns false.
-func resolvesToDir(path string) bool {
-	workPath, err := filepath.EvalSymlinks(f(path))
-	if err != nil {
-		return false
-	}
-
-	switch isEntType(workPath) {
-	case entTypeDir:
-		return true
-	case entTypeLink:
-		return resolvesToDir(workPath)
-	}
-	return false
 }
