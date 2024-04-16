@@ -56,6 +56,10 @@ func checkTestResults(wr ResultEntries, t *testing.T) bool {
 	expected["/tests/users/andrew/others/more/directories"] = false
 	expected["/tests/users/andrew/others/more/directories/to"] = false
 	expected["/tests/users/andrew/others/more/directories/to/find"] = false
+	expected["/tests/users/docs1"] = false
+	expected["/tests/users/docs2"] = false
+	expected["/tests/users/docs1/more"] = false
+	expected["/tests/users/docs2/more"] = false
 
 	var pass = true
 
