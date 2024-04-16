@@ -4,24 +4,19 @@ type SymConf struct {
 	StartPath      string
 	FollowSymlinks bool
 	Noisy          bool
-	maxLoops       int
-	pending        PendingEntries
-	history        historyEntries
-	results        ResultEntries
+	dirs           DirEntries
+	files          DirEntries
+	others         DirEntries
 }
 
-const (
-	MILLION = 1000000000
-)
-
 func NewSymConf(options ...func(*SymConf)) *SymConf {
-	c := &SymConf{
-		maxLoops: MILLION,
-	}
+
+	c := &SymConf{}
 	for _, option := range options {
 		option(c)
 	}
 	return c
+
 }
 
 func WithStartPath(startPath string) func(*SymConf) {
@@ -36,14 +31,8 @@ func WithLogging() func(*SymConf) {
 	}
 }
 
-func FollowSymLinks() func(*SymConf) {
+func FollowsSymLinks() func(*SymConf) {
 	return func(c *SymConf) {
 		c.FollowSymlinks = true
-	}
-}
-
-func OverridesMaxLoopsValue(maxLoops int) func(*SymConf) {
-	return func(c *SymConf) {
-		c.maxLoops = maxLoops
 	}
 }
