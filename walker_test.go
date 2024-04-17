@@ -1,4 +1,4 @@
-package swalker
+package symwalker
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ func TestSymWalker(t *testing.T) {
 
 	conf := NewSymConf(
 		WithStartPath("/tests/users"),
-		FollowsSymLinks(),
+		WithFollowedSymLinks(),
 		WithLogging(),
 	)
 

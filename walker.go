@@ -1,4 +1,4 @@
-package swalker
+package symwalker
 
 import (
 	"fmt"
@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 )
 
+// SymWalker accepts a configuration object. It calls the function that
+// starts the main directory walking loop. It returns a Results object.
 func SymWalker(conf *SymConf) (results Results, err error) {
 
 	conf.StartPath, err = filepath.Abs(filepath.Clean(conf.StartPath))
@@ -23,12 +25,19 @@ func SymWalker(conf *SymConf) (results Results, err error) {
 
 }
 
+// startWalkLoop is the where the main walk loop begins. It uses
+// the configuration object's StartPath value to start.
+// The function calls isReadable, which attempts to open the StartPath.
+// On success, isEntType returns the entType of the StartPath.
+// If the entType is entTypeDir, then the StartPath is a directory, and
+// is walked. Otherwise, the function returns. StartPath CANNOT be
+// a file or a symlink.
 func startWalkLoop(conf *SymConf) (err error) {
 
 	readable, err := isReadable(fullPathUnsafe(conf.StartPath))
 	if err != nil || !readable {
 		noise(conf.Noisy, "unable to read: %s", conf.StartPath)
-		return fmt.Errorf("path is not readable: %s", conf.StartPath)
+		return fmt.Errorf("StartPath is not readable: %s", conf.StartPath)
 	}
 
 	switch isEntType(conf.StartPath) {
@@ -41,6 +50,7 @@ func startWalkLoop(conf *SymConf) (err error) {
 
 	default:
 
+		noise(conf.Noisy, "StartPath must be a directory: %s", conf.StartPath)
 		return fmt.Errorf("startPath must be a directory")
 
 	}
@@ -48,6 +58,19 @@ func startWalkLoop(conf *SymConf) (err error) {
 	return nil
 }
 
+// dirWalk IS the primary loop. It accepts a pointer to the configuration object,
+// a basePath, and history, which is a lineHistory object. When first calling dirWalk, lineHistory will
+// be a new, empty, lineHistory object.
+// First, the lineHistory slice is refreshed, and "dereferenced".
+// The basePath is checked for readability. After which, basePath's entType is checked.
+// If the entType is entTypeDir, then the directory is opened and each directory entry is passed
+// to processDirEntry.
+// -- if the entType is entTypeFile, entTypeOther, entTypeErrored, it is added to results.
+// -- If the entType is entTypeLink, then the target path is evaluated for it's own entType.
+// -- If the basePath's target is entTypeDir, it is opened and each directory entry is passed to
+// processDirEntry.
+// If the basePath's target is entTypeLink, it is passed to processDirEntry.
+// If the basePath's target is entTypeFile, entTypeOther, entTypeErrored, it is added to results.
 func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 
 	history = history.refresh()
@@ -78,13 +101,17 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 
 		for _, entry := range entries {
 
-			workPath := joinUnsafe(basePath, entry.Name())
+			workPath := joinPaths(basePath, entry.Name())
 			processDirEntry(conf, workPath, history)
 
 		}
 
 	case entTypeLink:
 
+		if !conf.FollowSymlinks {
+			noise(conf.Noisy, "Not evaluating symlink: %s", basePath)
+			break
+		}
 		target, err := filepath.EvalSymlinks(basePath)
 		if err != nil {
 			return err
@@ -108,10 +135,14 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 
 			for _, entry := range entries {
 
-				workPath := joinUnsafe(basePath, entry.Name())
+				workPath := joinPaths(basePath, entry.Name())
 				processDirEntry(conf, workPath, history)
 
 			}
+
+		case entTypeLink:
+
+			processDirEntry(conf, basePath, history)
 
 		case entTypeFile:
 
@@ -137,9 +168,13 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 
 }
 
+// processDirEntry handles each directory entry from the dirWalk function.
+// The purpose of processDirEntry is to determine how to handle each entry.
+// If the provided path's entType is entTypeDir, it is passed to dirWalk.
+// If it is entTypeLink, the target's target is evaluated and passed to processDirEntry.
+// If the provided path (or the path's target) entType is: entTypeFile, entTypeOther,
+// or entTypeErrored then the path is added to the results.
 func processDirEntry(conf *SymConf, path string, history lineHistory) {
-
-	//noise(conf.Noisy, "Processing %s", path)
 
 	history = history.refresh()
 
@@ -161,6 +196,11 @@ func processDirEntry(conf *SymConf, path string, history lineHistory) {
 
 	case entTypeLink:
 
+		if !conf.FollowSymlinks {
+			noise(conf.Noisy, "Not evaluating symlink: %s", path)
+			break
+		}
+
 		target, err := filepath.EvalSymlinks(path)
 		if err != nil {
 			return
@@ -177,7 +217,13 @@ func processDirEntry(conf *SymConf, path string, history lineHistory) {
 
 		case entTypeLink:
 
-			processDirEntry(conf, path, history)
+			linkTarget, err := filepath.EvalSymlinks(target)
+			if err != nil {
+				return
+			}
+
+			workPath := joinPaths(path, linkTarget)
+			processDirEntry(conf, workPath, history)
 
 		case entTypeFile:
 

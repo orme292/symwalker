@@ -1,5 +1,3 @@
 # symwalker
-A directory-tree walker that follows symlinks and returns a list of target file mode types. Returns directories
-and files of all subdirectories starting from a given startPath.
 
-WIP
+SymWalker is a directory tree walker with symlink loop protection. As a result, it sacrifices speed for safety.

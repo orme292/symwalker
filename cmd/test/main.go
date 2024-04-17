@@ -8,13 +8,13 @@ import (
 )
 
 func main() {
-	conf := swalker.SymConf{
+	conf := symwalker.SymConf{
 		StartPath:      "/Users/aorme",
 		FollowSymlinks: true,
 		Noisy:          true,
 	}
 
-	res, err := swalker.SymWalker(&conf)
+	res, err := symwalker.SymWalker(&conf)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
