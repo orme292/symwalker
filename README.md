@@ -19,7 +19,7 @@ go get github.com/orme292/symwalker@v0.1.6
 
 ```go
 import (
-"github.com/orme292/symwalker"
+    "github.com/orme292/symwalker"
 )
 ```
 
@@ -34,7 +34,7 @@ Symwalker uses a functional options pattern to create a configuration object.
 func main() {
 
     conf := NewSymConf(
-        WithStartPath("/home/andrew/"),
+        WithStartPath("/home/andrew/")
         WithFollowedSymLinks(),
         WithLogging(), 
     )
@@ -57,7 +57,7 @@ The `SymWalk` function is the starting point for SymWalker. Call the function an
 configuration object to it to begin the directory walk.
 
 ```go
-    results, err := SymWalker(conf)
+        results, err := SymWalker(conf)
 ```
 
 ### The *Results* Type Struct
@@ -66,9 +66,9 @@ configuration object to it to begin the directory walk.
 
 ```go
 type Results struct {
-Dirs   DirEntries
-Files  DirEntries
-Others DirEntries
+    Dirs   DirEntries
+    Files  DirEntries
+    Others DirEntries
 }
 ```
 
@@ -80,7 +80,7 @@ type DirEntries []DirEntry
 
 ```go
 type DirEntry struct {
-Path   string
+    Path   string
 }
 ```
 
@@ -104,7 +104,7 @@ You can work with Results using a ranged loop.
 
 ```go
 for _, dir := range Results.Dirs {
-fmt.Printf("Dir: %s\n", dir.Path)
+    fmt.Printf("Dir: %s\n", dir.Path)
 }
 // Dir: /home/andrew/documents
 // Dir: /home/andrew/pictures
@@ -114,7 +114,7 @@ fmt.Printf("Dir: %s\n", dir.Path)
 // ....
 
 for _, file := range Results.Files {
-fmt.Printf("File: %s\n", file.Path)
+    fmt.Printf("File: %s\n", file.Path)
 }
 // File: /home/andrew/important.doc
 // File: /home/andrew/documents/taxes.pdf
