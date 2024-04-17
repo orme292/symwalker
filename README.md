@@ -33,11 +33,11 @@ Symwalker uses a functional options pattern to create a configuration object.
 ```go
 func main() {
 
-conf := NewSymConf(
-WithStartPath("/home/andrew/"),
-WithFollowedSymLinks(),
-WithLogging(),
-)
+    conf := NewSymConf(
+        WithStartPath("/home/andrew/"),
+        WithFollowedSymLinks(),
+        WithLogging(), 
+    )
 
 }
 ```
@@ -57,7 +57,7 @@ The `SymWalk` function is the starting point for SymWalker. Call the function an
 configuration object to it to begin the directory walk.
 
 ```go
-results, err := SymWalker(conf)
+    results, err := SymWalker(conf)
 ```
 
 ### The *Results* Type Struct
@@ -103,7 +103,7 @@ than `ModeDir`. `Results.Files` are paths which match no `os.FileMode` type.
 You can work with Results using a ranged loop.
 
 ```go
-    for _, dir := range Results.Dirs {
+for _, dir := range Results.Dirs {
 fmt.Printf("Dir: %s\n", dir.Path)
 }
 // Dir: /home/andrew/documents
@@ -113,7 +113,7 @@ fmt.Printf("Dir: %s\n", dir.Path)
 // Dir: /home/andrew/work/january/meetings
 // ....
 
-for ), file := range Results.Files {
+for _, file := range Results.Files {
 fmt.Printf("File: %s\n", file.Path)
 }
 // File: /home/andrew/important.doc
