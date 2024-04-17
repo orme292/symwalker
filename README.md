@@ -103,7 +103,7 @@ than `ModeDir`. `Results.Files` are paths which match no `os.FileMode` type.
 You can work with Results using a ranged loop.
 
 ```go
-for _, dir := range Results.Dirs {
+    for _, dir := range Results.Dirs {
 fmt.Printf("Dir: %s\n", dir.Path)
 }
 // Dir: /home/andrew/documents
