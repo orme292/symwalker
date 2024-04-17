@@ -1,7 +1,7 @@
 # SymWalker
 
 ---
-[![Go Reference](https://pkg.go.dev/badge/github.com/orme292/symwalker@v0.1.5.svg)](https://pkg.go.dev/github.com/orme292/symwalker@v0.1.5)
+[![Go Reference](https://pkg.go.dev/badge/github.com/orme292/symwalker@v0.1.6.svg)](https://pkg.go.dev/github.com/orme292/symwalker@v0.1.6)
 
 SymWalker is a directory tree walker with symlink loop protection. It works by building a
 separate history for each sub-directory branch (internally called lineHistory) underneath
@@ -14,7 +14,7 @@ other directory entries.
 ---
 
 ```shell
-go get github.com/orme292/symwalker@v0.1.5
+go get github.com/orme292/symwalker@v0.1.6
 ```
 
 ```go
