@@ -10,7 +10,7 @@ import (
 // starts the main directory walking loop. It returns a Results object.
 func SymWalker(conf *SymConf) (results Results, err error) {
 
-	conf.StartPath, err = filepath.Abs(filepath.Clean(conf.StartPath))
+	conf.StartPath, err = filepath.Abs(conf.StartPath)
 	if err != nil {
 		return
 	}
