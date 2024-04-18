@@ -24,7 +24,8 @@ RUN /bin/bash -c 'ln -s /file.txt /tests/users/andrew/linkedfile'
 RUN /bin/bash -c 'ln -s /tests3 /tests/users/docs1'
 RUN /bin/bash -c 'ln -s /tests3 /tests/users/docs2'
 
-# Cyclical Loop (symwalker catches this, but not right away)
+# Cyclical Loop (this is a figure-8 style loop, which SymWalker catches after having gone
+# around once... considering this to be expected behavior.
 #RUN /bin/bash -c 'mkdir -p /tests/users/pointA/a/b/c'
 #RUN /bin/bash -c 'mkdir -p /tests/users/pointB/1/2/3'
 #RUN /bin/bash -c 'ln -s /tests/users/pointA /tests/users/pointB/1/2/3/loop'
