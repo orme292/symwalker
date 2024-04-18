@@ -27,30 +27,58 @@ func TestSymWalker(t *testing.T) {
 		t.Fail()
 	}
 
+	// Test WithoutFiles... sends an empty map to check against res.Files
+	res, err = SymWalker(NewSymConf(
+		WithStartPath("/tests/users"),
+		WithFollowedSymLinks(),
+		WithLogging(),
+		WithoutFiles(),
+	))
+	pass = checkExpectedResults(getExpectedDirs(), res.Dirs, t)
+	if !pass {
+		t.Fail()
+	}
+	empty := make(map[string]bool)
+	pass = checkExpectedResults(empty, res.Files, t)
+	if !pass {
+		t.Fail()
+	}
 }
 
 func checkExpectedResults(e map[string]bool, d DirEntries, t *testing.T) bool {
 
-	var pass = true
+	var pass bool
+	pass = true
 
-	for _, entry := range d {
-		if _, ok := e[entry.Path]; ok {
-			if e[entry.Path] == true {
-				t.Errorf("Unexpected duplicate: %s", entry.Path)
-				pass = false
-			} else if e[entry.Path] == false {
-				t.Logf("OK: %s", entry.Path)
-				e[entry.Path] = true
-			}
-		} else {
-			t.Errorf("Unexpected Path: %s", entry.Path)
-		}
+	if e == nil {
+		pass = false
+		t.Errorf("e is nil, expected non-nil")
 	}
 
-	for index := range e {
-		if e[index] == false {
-			t.Errorf("Missing Path: %s", index)
-			pass = false
+	if len(e) == 0 {
+		t.Logf("expected (e) is empty.")
+	}
+
+	if pass {
+		for _, entry := range d {
+			if _, ok := e[entry.Path]; ok {
+				if e[entry.Path] == true {
+					t.Errorf("Unexpected duplicate: %s", entry.Path)
+					pass = false
+				} else if e[entry.Path] == false {
+					t.Logf("OK: %s", entry.Path)
+					e[entry.Path] = true
+				}
+			} else {
+				t.Errorf("Unexpected Path: %s", entry.Path)
+			}
+		}
+
+		for index := range e {
+			if e[index] == false {
+				t.Errorf("Missing Path: %s", index)
+				pass = false
+			}
 		}
 	}
 
