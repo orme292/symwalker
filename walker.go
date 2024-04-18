@@ -150,9 +150,17 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 
 		case entTypeFile:
 
+			if conf.WithoutFiles {
+				break
+			}
+
 			conf.files.add(basePath)
 
 		case entTypeOther, entTypeErrored:
+
+			if conf.WithoutFiles {
+				break
+			}
 
 			conf.others.add(basePath)
 
@@ -160,9 +168,17 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 
 	case entTypeFile:
 
+		if conf.WithoutFiles {
+			break
+		}
+
 		conf.files.add(basePath)
 
 	case entTypeOther, entTypeErrored:
+
+		if conf.WithoutFiles {
+			break
+		}
 
 		conf.others.add(basePath)
 
@@ -188,8 +204,6 @@ func processDirEntry(conf *SymConf, path string, history lineHistory) {
 		return
 	}
 
-	noise(conf.Noisy, "Processing (%s): %s", isEntType(path).string(), path)
-
 	switch isEntType(path) {
 	case entTypeDir:
 
@@ -211,6 +225,7 @@ func processDirEntry(conf *SymConf, path string, history lineHistory) {
 		}
 
 		noise(conf.Noisy, "Processing link: %s; target: %s; (leads to: %s)", path, target, isEntType(target).string())
+
 		switch isEntType(target) {
 		case entTypeDir:
 
@@ -231,23 +246,44 @@ func processDirEntry(conf *SymConf, path string, history lineHistory) {
 
 		case entTypeFile:
 
+			if conf.WithoutFiles {
+				break
+			}
+
+			noise(conf.Noisy, "Process (%s): %s", isEntType(path).string(), path)
+
 			conf.files.add(path)
 
+		case entTypeOther, entTypeErrored:
+
+			if conf.WithoutFiles {
+				break
+			}
+
+			noise(conf.Noisy, "Process (%s): %s", isEntType(path).string(), path)
+
+			conf.others.add(path)
 		}
 
 	case entTypeFile:
 
+		if conf.WithoutFiles {
+			break
+		}
+
+		noise(conf.Noisy, "Process (%s): %s", isEntType(path).string(), path)
+
 		conf.files.add(path)
 
-	case entTypeOther:
+	case entTypeOther, entTypeErrored:
+
+		if conf.WithoutFiles {
+			break
+		}
+
+		noise(conf.Noisy, "Process (%s): %s", isEntType(path).string(), path)
 
 		conf.others.add(path)
-		noise(conf.Noisy, "Skipping %s", path)
-
-	case entTypeErrored:
-
-		conf.others.add(path)
-		noise(conf.Noisy, "unable to determine entry type: %s", path)
 
 	}
 
