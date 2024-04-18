@@ -24,15 +24,16 @@ func (lh lineHistory) add(path string) lineHistory {
 	return append(lh, path)
 }
 
-// refresh creates a new lineHistory slice and appends the
-// elements from the current lineHistory slice to it.
-// This keeps each branching walk function's lineHistory focused to
+// branch eliminates the lineHistory slice's pointer to the
+// underlying array and creates a separate slice with
+// the contents of the original lineHistory.
+// This keeps each branching directory's lineHistory focused to
 // a walk's particular line.
 // Parameters:
 // - lh: the lineHistory slice to be refreshed
 // Returns:
 // - a new lineHistory slice with the elements from the current lineHistory slice appended
-func (lh lineHistory) refresh() lineHistory {
+func (lh lineHistory) branch() lineHistory {
 	var newLineHistory lineHistory
 	return append(newLineHistory, lh...)
 }

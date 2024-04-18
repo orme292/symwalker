@@ -73,7 +73,7 @@ func startWalkLoop(conf *SymConf) (err error) {
 // If the basePath's target is entTypeFile, entTypeOther, entTypeErrored, it is added to results.
 func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 
-	history = history.refresh()
+	history = history.branch()
 
 	readable, err := isReadable(fullPathUnsafe(basePath))
 	if err != nil || !readable {
@@ -176,7 +176,7 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 // or entTypeErrored then the path is added to the results.
 func processDirEntry(conf *SymConf, path string, history lineHistory) {
 
-	history = history.refresh()
+	history = history.branch()
 
 	readable, err := isReadable(fullPathUnsafe(path))
 	if err != nil || !readable {
