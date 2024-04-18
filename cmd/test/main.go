@@ -4,23 +4,30 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/orme292/symwalker"
+	sw "github.com/orme292/symwalker"
 )
 
 func main() {
-	conf := symwalker.SymConf{
-		StartPath:      "/Users/aorme",
-		FollowSymlinks: true,
-		Noisy:          true,
-	}
 
-	res, err := symwalker.SymWalker(&conf)
+	conf := sw.NewSymConf(
+		sw.WithStartPath("/Users/andrew"),
+		sw.WithFollowedSymLinks(),
+		sw.WithLogging(),
+	)
+
+	results, err := sw.SymWalker(conf)
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Printf("Error occurred: %s", err.Error())
 		os.Exit(1)
 	}
-	for _, entry := range res {
-		fmt.Printf("Path: %s\n", entry.Path)
+
+	for _, dir := range results.Dirs {
+		fmt.Printf("Dir: %s\n", dir.Path)
 	}
+
+	for _, file := range results.Files {
+		fmt.Printf("File: %s\n", file.Path)
+	}
+
 	os.Exit(0)
 }
