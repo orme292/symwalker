@@ -1,6 +1,6 @@
 # SymWalker
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/orme292/symwalker@v0.1.61.svg)](https://pkg.go.dev/github.com/orme292/symwalker@v0.1.61)
+[![Go Reference](https://pkg.go.dev/badge/github.com/orme292/symwalker@v0.1.7.svg)](https://pkg.go.dev/github.com/orme292/symwalker@v0.1.7)
 
 SymWalker is a directory tree walker with symlink loop protection. It works by building a
 separate history for each sub-directory branch (internally called lineHistory) underneath
@@ -11,7 +11,7 @@ other directory entries.
 ## Import this Module
 
 ```shell
-go get github.com/orme292/symwalker@v0.1.61
+go get github.com/orme292/symwalker@v0.1.7
 ```
 
 ```go
@@ -46,6 +46,8 @@ a path to a directory, not a file or a symlink.
 `WithFollowedSymLinks()`: Used to tell SymWalker that it SHOULD evaluate and/or walk symlinks.
 
 `WithLogging()`: Tells SymWalker to emit logs. SymWalker uses `log.Printf` to output messages.
+
+`WithoutFiles()`: Tells SymWalker to skip processing non-directory entries; Results.Files will be empty.
 
 ### Call SymWalk
 
