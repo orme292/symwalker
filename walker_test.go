@@ -4,12 +4,15 @@ import (
 	"testing"
 )
 
+var empty = make(map[string]bool)
+
 func TestSymWalker(t *testing.T) {
 
 	conf := NewSymConf(
 		WithStartPath("/tests/users"),
 		WithFollowedSymLinks(),
 		WithLogging(),
+		WithDepth(INFINITE),
 	)
 
 	res, err := SymWalker(conf)
@@ -33,16 +36,34 @@ func TestSymWalker(t *testing.T) {
 		WithFollowedSymLinks(),
 		WithLogging(),
 		WithoutFiles(),
+		WithDepth(INFINITE),
 	))
 	pass = checkExpectedResults(getExpectedDirs(), res.Dirs, t)
 	if !pass {
 		t.Fail()
 	}
-	empty := make(map[string]bool)
+
 	pass = checkExpectedResults(empty, res.Files, t)
 	if !pass {
 		t.Fail()
 	}
+
+	// Test WithDepth(FLAT)
+	res, err = SymWalker(NewSymConf(
+		WithStartPath("/tests/users/david/documents/"),
+		WithFollowedSymLinks(),
+		WithLogging(),
+		WithDepth(FLAT),
+	))
+	pass = checkExpectedResults(getDepthTestExpectedDirValues(), res.Dirs, t)
+	if !pass {
+		t.Fail()
+	}
+	pass = checkExpectedResults(getDepthTestExpectedValues(), res.Files, t)
+	if !pass {
+		t.Fail()
+	}
+
 }
 
 func checkExpectedResults(e map[string]bool, d DirEntries, t *testing.T) bool {
@@ -293,5 +314,22 @@ func getExpectedFiles() map[string]bool {
 	expected["/tests/users/david/documents/rogue/downloads/e.part"] = false
 	expected["/tests/users/david/documents/rogue/downloads/f.part"] = false
 	expected["/tests/users/david/documents/rogue/downloads/g.part"] = false
+	return expected
+}
+
+func getDepthTestExpectedDirValues() map[string]bool {
+	expected := make(map[string]bool)
+	expected["/tests/users/david/documents"] = false
+	return expected
+}
+
+func getDepthTestExpectedValues() map[string]bool {
+	expected := make(map[string]bool)
+	expected["/tests/users/david/documents/1-report.doc"] = false
+	expected["/tests/users/david/documents/2-report.doc"] = false
+	expected["/tests/users/david/documents/3-report.doc"] = false
+	expected["/tests/users/david/documents/4-report.doc"] = false
+	expected["/tests/users/david/documents/5-report.doc"] = false
+	expected["/tests/users/david/documents/6-report.doc"] = false
 	return expected
 }
