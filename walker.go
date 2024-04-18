@@ -81,9 +81,9 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 
 	history = history.branch()
 
-	ent := isEntType(basePath)
+	basePathEnt := isEntType(basePath)
 
-	readable, err := isReadable(fullPathUnsafe(basePath), ent)
+	readable, err := isReadable(fullPathUnsafe(basePath), basePathEnt)
 	if err != nil || !readable {
 		err = fmt.Errorf("not readable: %s", basePath)
 		return
@@ -91,8 +91,12 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 
 	noise(conf.Noisy, "Reading %s", basePath)
 
-	switch ent {
+	switch basePathEnt {
 	case entTypeDir:
+
+		if history.exceedsDepth(conf.Depth) {
+			break
+		}
 
 		if history.pathExists(basePath) {
 			noise(conf.Noisy, "Path already processed: %s", basePath)
@@ -127,6 +131,10 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 
 		switch isEntType(target) {
 		case entTypeDir:
+
+			if history.exceedsDepth(conf.Depth) {
+				break
+			}
 
 			if history.pathExists(target) {
 				noise(conf.Noisy, "Path already processed: %s", target)

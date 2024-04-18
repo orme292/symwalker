@@ -37,3 +37,16 @@ func (lh lineHistory) branch() lineHistory {
 	var newLineHistory lineHistory
 	return append(newLineHistory, lh...)
 }
+
+// exceedsDepth checks if a given lineHistory (branch) has evaluated more
+// subdirectories than the provided n value. The n value will come from
+// the SymConf.Depth value. A value of 0 (FLAT) indicates infinite depth.
+func (lh lineHistory) exceedsDepth(n int) bool {
+	if n <= INFINITE {
+		return false
+	}
+	if len(lh) >= n {
+		return true
+	}
+	return false
+}

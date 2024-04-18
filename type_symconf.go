@@ -9,10 +9,16 @@ type SymConf struct {
 	FollowSymlinks bool
 	WithoutFiles   bool
 	Noisy          bool
+	Depth          int
 	dirs           DirEntries
 	files          DirEntries
 	others         DirEntries
 }
+
+const (
+	FLAT     = 1
+	INFINITE = 0
+)
 
 // NewSymConf implements the functional options pattern to handle
 // the package configuration dependency. Example:
@@ -65,5 +71,15 @@ func WithLogging() OptFunc {
 func WithoutFiles() OptFunc {
 	return func(c *SymConf) {
 		c.WithoutFiles = true
+	}
+}
+
+// WithDepth limits how many levels SymWalker will walk below
+// the provided StartPath directory. Value n can be set to
+// any number. INFINITE is equal to 0 or infinite depth. FLAT
+// is equal to 1 -- SymWalker will not go below the top level.
+func WithDepth(n int) OptFunc {
+	return func(c *SymConf) {
+		c.Depth = n
 	}
 }
