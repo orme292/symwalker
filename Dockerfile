@@ -24,6 +24,12 @@ RUN /bin/bash -c 'ln -s /file.txt /tests/users/andrew/linkedfile'
 RUN /bin/bash -c 'ln -s /tests3 /tests/users/docs1'
 RUN /bin/bash -c 'ln -s /tests3 /tests/users/docs2'
 
+# Cyclical Loop (symwalker catches this, but not right away)
+#RUN /bin/bash -c 'mkdir -p /tests/users/pointA/a/b/c'
+#RUN /bin/bash -c 'mkdir -p /tests/users/pointB/1/2/3'
+#RUN /bin/bash -c 'ln -s /tests/users/pointA /tests/users/pointB/1/2/3/loop'
+#RUN /bin/bash -c 'ln -s /tests/users/pointB /tests/users/pointA/a/b/c/loop'
+
 # These create symlink loops, there should be no results from these paths
 RUN /bin/bash -c 'ln -s /tests3 /tests/users/docs1/rogue'
 RUN /bin/bash -c 'ln -s /tests/users /tests/users/andrew/downloads/loop'
