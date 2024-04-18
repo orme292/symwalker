@@ -38,13 +38,15 @@ func SymWalker(conf *SymConf) (results Results, err error) {
 // a file or a symlink.
 func startWalkLoop(conf *SymConf) (err error) {
 
-	readable, err := isReadable(fullPathUnsafe(conf.StartPath))
+	ent := isEntType(conf.StartPath)
+
+	readable, err := isReadable(fullPathUnsafe(conf.StartPath), ent)
 	if err != nil || !readable {
-		noise(conf.Noisy, "unable to read: %s", conf.StartPath)
+		noise(conf.Noisy, "not readable: %s", conf.StartPath)
 		return fmt.Errorf("StartPath is not readable: %s", conf.StartPath)
 	}
 
-	switch isEntType(conf.StartPath) {
+	switch ent {
 	case entTypeDir:
 
 		err := dirWalk(conf, conf.StartPath, lineHistory{})
@@ -79,15 +81,17 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 
 	history = history.branch()
 
-	readable, err := isReadable(fullPathUnsafe(basePath))
+	ent := isEntType(basePath)
+
+	readable, err := isReadable(fullPathUnsafe(basePath), ent)
 	if err != nil || !readable {
-		err = fmt.Errorf("path is not readable: %s", basePath)
+		err = fmt.Errorf("not readable: %s", basePath)
 		return
 	}
 
 	noise(conf.Noisy, "Reading %s", basePath)
 
-	switch isEntType(basePath) {
+	switch ent {
 	case entTypeDir:
 
 		if history.pathExists(basePath) {
@@ -198,13 +202,15 @@ func processDirEntry(conf *SymConf, path string, history lineHistory) {
 
 	history = history.branch()
 
-	readable, err := isReadable(fullPathUnsafe(path))
+	ent := isEntType(path)
+
+	readable, err := isReadable(fullPathUnsafe(path), ent)
 	if err != nil || !readable {
-		noise(conf.Noisy, "Unable to read: %s", path)
+		noise(conf.Noisy, "Not readable: %s", path)
 		return
 	}
 
-	switch isEntType(path) {
+	switch ent {
 	case entTypeDir:
 
 		err := dirWalk(conf, path, history)
