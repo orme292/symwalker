@@ -1,7 +1,10 @@
+// Package symwalker is a directory tree walker with symlink loop protection.
+// It builds a separate history for each branching sub-directory below
+// a given starting path. When evaluating a new symlink that targets a
+// directory, the branch history is checked before walking the directory.
 package symwalker
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -19,7 +22,7 @@ var (
 
 // string returns the string representation of the entType.
 func (st entType) string() string {
-	return fmt.Sprintf("%s", st)
+	return string(st)
 }
 
 // isEntType determines the entType by retrieving the path's info (with os.Lstat).
