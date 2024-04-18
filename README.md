@@ -1,6 +1,5 @@
 # SymWalker
 
----
 [![Go Reference](https://pkg.go.dev/badge/github.com/orme292/symwalker@v0.1.6.svg)](https://pkg.go.dev/github.com/orme292/symwalker@v0.1.6)
 
 SymWalker is a directory tree walker with symlink loop protection. It works by building a
@@ -11,21 +10,18 @@ other directory entries.
 
 ## Import this Module
 
----
-
 ```shell
 go get github.com/orme292/symwalker@v0.1.6
 ```
 
 ```go
 import (
-    "github.com/orme292/symwalker"
+    sw "github.com/orme292/symwalker"
 )
 ```
 
 ## Usage
 
----
 Symwalker uses a functional options pattern to create a configuration object.
 
 ### Build Configuration
@@ -33,10 +29,10 @@ Symwalker uses a functional options pattern to create a configuration object.
 ```go
 func main() {
 
-    conf := NewSymConf(
-        WithStartPath("/home/andrew/")
-        WithFollowedSymLinks(),
-        WithLogging(), 
+    conf := sw.NewSymConf(
+        sw.WithStartPath("/home/andrew/"),
+        sw.WithFollowedSymLinks(),
+        sw.WithLogging(), 
     )
 
 }
@@ -57,7 +53,7 @@ The `SymWalk` function is the starting point for SymWalker. Call the function an
 configuration object to it to begin the directory walk.
 
 ```go
-        results, err := SymWalker(conf)
+results, err := sw.SymWalker(conf)
 ```
 
 ### The *Results* Type Struct
@@ -80,7 +76,7 @@ type DirEntries []DirEntry
 
 ```go
 type DirEntry struct {
-    Path   string
+    Path string
 }
 ```
 
@@ -96,27 +92,45 @@ See documentation for the [os.FileMode](https://pkg.go.dev/os#FileMode) type. `R
 match `ModeDir` (os.FileMode *or* fs.FileMode). `Results.Others` files are paths which match any type other
 than `ModeDir`. `Results.Files` are paths which match no `os.FileMode` type.
 
----
+## Example
 
-## Working with Results
-
-You can work with Results using a ranged loop.
+Here's a full example on how to use SymWalker. The easiest way to work with Results is to loop over
+each DirEntries type with a range loop (see below).
 
 ```go
-for _, dir := range Results.Dirs {
-    fmt.Printf("Dir: %s\n", dir.Path)
-}
-// Dir: /home/andrew/documents
-// Dir: /home/andrew/pictures
-// Dir: /home/andrew/work
-// Dir: /home/andrew/work/january
-// Dir: /home/andrew/work/january/meetings
-// ....
+package main
 
-for _, file := range Results.Files {
-    fmt.Printf("File: %s\n", file.Path)
+import (
+    "fmt"
+    "os"
+    
+    sw "github.com/orme292/symwalker"
+)
+
+func main() {
+
+    conf := sw.NewSymConf(
+        sw.WithStartPath("/home/andrew/"),
+        sw.WithFollowedSymLinks(),
+        sw.WithLogging(),
+    )
+
+    results, err := sw.SymWalker(conf)
+    if err != nil {
+        fmt.Printf("Error occurred: %s", err.Error())
+        os.Exit(1)
+    }
+    
+    for _, dir := range results.Dirs {
+        fmt.Printf("Dir: %s\n", dir.Path)
+    }
+ 
+
+    for _, file := range results.Files {
+        fmt.Printf("File: %s\n", file.Path)
+    }
+    
+    os.Exit(0)
 }
-// File: /home/andrew/important.doc
-// File: /home/andrew/documents/taxes.pdf
-// File: /home/andrew/documents/passwords.txt 😉
+
 ```
