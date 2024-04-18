@@ -49,7 +49,10 @@ func noise(noisy bool, f string, v ...interface{}) {
 // Returns:
 // - a boolean indicating if the path is readable
 // - an error if there was an error during the process
-func isReadable(path string) (bool, error) {
+func isReadable(path string, ent entType) (bool, error) {
+	if ent == entTypeOther {
+		return false, nil
+	}
 	path, err := filepath.Abs(path)
 	if err != nil {
 		return false, err
