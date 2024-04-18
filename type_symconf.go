@@ -7,6 +7,7 @@ package symwalker
 type SymConf struct {
 	StartPath      string
 	FollowSymlinks bool
+	WithoutFiles   bool
 	Noisy          bool
 	dirs           DirEntries
 	files          DirEntries
@@ -56,5 +57,13 @@ func WithFollowedSymLinks() OptFunc {
 func WithLogging() OptFunc {
 	return func(c *SymConf) {
 		c.Noisy = true
+	}
+}
+
+// WithoutFiles is a flag that SymWalker checks before evaluating
+// non-directory directory entries or symlinks
+func WithoutFiles() OptFunc {
+	return func(c *SymConf) {
+		c.WithoutFiles = true
 	}
 }
