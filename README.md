@@ -1,6 +1,6 @@
 # SymWalker
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/orme292/symwalker@v0.1.72.svg)](https://pkg.go.dev/github.com/orme292/symwalker@v0.1.72)
+[![Go Reference](https://pkg.go.dev/badge/github.com/orme292/symwalker@v0.1.8.svg)](https://pkg.go.dev/github.com/orme292/symwalker@v0.1.8)
 
 SymWalker is a directory tree walker with symlink loop protection. It works by building a
 separate history for each sub-directory branch (internally called lineHistory) underneath
@@ -11,7 +11,7 @@ other directory entries.
 ## Import this Module
 
 ```shell
-go get github.com/orme292/symwalker@v0.1.72
+go get github.com/orme292/symwalker@v0.1.8
 ```
 
 ```go
@@ -22,15 +22,14 @@ import (
 
 ## Usage
 
-Symwalker uses a functional options pattern to create a configuration object.
+SymWalker uses a functional options pattern to apply an optional configuration.
 
-### Build Configuration
+### Build Optional Configuration
 
 ```go
 func main() {
 
-    conf := sw.NewSymConf(
-        sw.WithStartPath("/home/andrew/"),
+opts := sw.NewSymConf("/home/andrew/",
         sw.WithFollowedSymLinks(),
         sw.WithLogging(), 
     )
@@ -40,8 +39,10 @@ func main() {
 
 ### Options
 
-`WithStartPath("path")`: required in order to specify the path to be walked. This has to be
-a path to a directory, not a file or a symlink.
+`WithDepth(n)`: Used to tell SymWalker how deep to walk from the starting path. `0` is infinite while `1` would walk
+only the provided starting path.
+
+`WithFileData()`: SymWalker will populate the FileObj field in each DirEntry with file information.
 
 `WithFollowedSymLinks()`: Used to tell SymWalker that it SHOULD evaluate and/or walk symlinks.
 
@@ -51,11 +52,11 @@ a path to a directory, not a file or a symlink.
 
 ### Call SymWalk
 
-The `SymWalk` function is the starting point for SymWalker. Call the function and pass a SymConf
-configuration object to it to begin the directory walk.
+The `SymWalk` function is the starting point for SymWalker. Call the function by passing the starting path and an
+options configuration object to begin the directory walk.
 
 ```go
-results, err := sw.SymWalker(conf)
+results, err := sw.SymWalker("root_path", opts)
 ```
 
 ### The *Results* Type Struct
@@ -78,7 +79,8 @@ type DirEntries []DirEntry
 
 ```go
 type DirEntry struct {
-    Path string
+Path    string
+FileObj objectify.FileObj
 }
 ```
 
@@ -93,6 +95,11 @@ Each `Results.Others` DirEntry could have a `Path` value set to a directory entr
 See documentation for the [os.FileMode](https://pkg.go.dev/os#FileMode) type. `Results.Dirs` are paths which
 match `ModeDir` (os.FileMode *or* fs.FileMode). `Results.Others` files are paths which match any type other
 than `ModeDir`. `Results.Files` are paths which match no `os.FileMode` type.
+
+## `FileObj` Field
+
+For the `FileObj` field, see the [Objectify](https://github.com/orme292/objectify) library
+[documentation](https://pkg.go.dev/github.com/orme292/objectify@v0.1.0) for information.
 
 ## Example
 
@@ -111,8 +118,7 @@ import (
 
 func main() {
 
-    conf := sw.NewSymConf(
-        sw.WithStartPath("/home/andrew/"),
+    conf := sw.NewSymConf("/home/andrew/",
         sw.WithFollowedSymLinks(),
         sw.WithLogging(),
     )
