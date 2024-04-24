@@ -40,7 +40,7 @@ func startWalkLoop(conf *SymConf) (err error) {
 
 	ent := isEntType(conf.StartPath)
 
-	readable, err := isReadable(fullPathUnsafe(conf.StartPath), ent)
+	readable, err := isReadable(fullPathSafe(conf.StartPath), ent)
 	if err != nil || !readable {
 		noise(conf.Noisy, "not readable: %s", conf.StartPath)
 		return fmt.Errorf("StartPath is not readable: %s", conf.StartPath)
@@ -62,6 +62,7 @@ func startWalkLoop(conf *SymConf) (err error) {
 	}
 
 	return nil
+
 }
 
 // dirWalk IS the primary loop. It accepts a pointer to the configuration object,
@@ -83,7 +84,7 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 
 	basePathEnt := isEntType(basePath)
 
-	readable, err := isReadable(fullPathUnsafe(basePath), basePathEnt)
+	readable, err := isReadable(fullPathSafe(basePath), basePathEnt)
 	if err != nil || !readable {
 		err = fmt.Errorf("not readable: %s", basePath)
 		return
@@ -104,7 +105,7 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 		}
 		history = history.add(basePath)
 
-		conf.dirs.add(basePath)
+		conf.dirs.add(basePath, conf.FileData)
 
 		entries, err := os.ReadDir(basePath)
 		if err != nil {
@@ -142,7 +143,7 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 			}
 			history = history.add(target)
 
-			conf.dirs.add(basePath)
+			conf.dirs.add(basePath, conf.FileData)
 
 			entries, err := os.ReadDir(target)
 			if err != nil {
@@ -166,7 +167,7 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 				break
 			}
 
-			conf.files.add(basePath)
+			conf.files.add(basePath, conf.FileData)
 
 		case entTypeOther, entTypeErrored:
 
@@ -174,7 +175,7 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 				break
 			}
 
-			conf.others.add(basePath)
+			conf.others.add(basePath, conf.FileData)
 
 		}
 
@@ -184,7 +185,7 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 			break
 		}
 
-		conf.files.add(basePath)
+		conf.files.add(basePath, conf.FileData)
 
 	case entTypeOther, entTypeErrored:
 
@@ -192,7 +193,7 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 			break
 		}
 
-		conf.others.add(basePath)
+		conf.others.add(basePath, conf.FileData)
 
 	}
 
@@ -212,7 +213,7 @@ func processDirEntry(conf *SymConf, path string, history lineHistory) {
 
 	ent := isEntType(path)
 
-	readable, err := isReadable(fullPathUnsafe(path), ent)
+	readable, err := isReadable(fullPathSafe(path), ent)
 	if err != nil || !readable {
 		noise(conf.Noisy, "Not readable: %s", path)
 		return
@@ -266,7 +267,7 @@ func processDirEntry(conf *SymConf, path string, history lineHistory) {
 
 			noise(conf.Noisy, "Process (%s): %s", isEntType(path).string(), path)
 
-			conf.files.add(path)
+			conf.files.add(path, conf.FileData)
 
 		case entTypeOther, entTypeErrored:
 
@@ -276,7 +277,7 @@ func processDirEntry(conf *SymConf, path string, history lineHistory) {
 
 			noise(conf.Noisy, "Process (%s): %s", isEntType(path).string(), path)
 
-			conf.others.add(path)
+			conf.others.add(path, conf.FileData)
 		}
 
 	case entTypeFile:
@@ -287,7 +288,7 @@ func processDirEntry(conf *SymConf, path string, history lineHistory) {
 
 		noise(conf.Noisy, "Process (%s): %s", isEntType(path).string(), path)
 
-		conf.files.add(path)
+		conf.files.add(path, conf.FileData)
 
 	case entTypeOther, entTypeErrored:
 
@@ -297,7 +298,7 @@ func processDirEntry(conf *SymConf, path string, history lineHistory) {
 
 		noise(conf.Noisy, "Process (%s): %s", isEntType(path).string(), path)
 
-		conf.others.add(path)
+		conf.others.add(path, conf.FileData)
 
 	}
 
