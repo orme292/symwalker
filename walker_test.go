@@ -1,6 +1,7 @@
 package symwalker
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -8,8 +9,7 @@ var empty = make(map[string]bool)
 
 func TestSymWalker(t *testing.T) {
 
-	conf := NewSymConf(
-		WithStartPath("/tests/users"),
+	conf := NewSymConf("/tests/users",
 		WithFollowedSymLinks(),
 		WithLogging(),
 		WithDepth(INFINITE),
@@ -18,7 +18,7 @@ func TestSymWalker(t *testing.T) {
 	res, err := SymWalker(conf)
 	if err != nil {
 		t.Errorf("SymWalker returned an error: %s", err.Error())
-		t.Fail()
+		t.FailNow()
 	}
 
 	pass := checkExpectedResults(getExpectedDirs(), res.Dirs, t)
@@ -31,13 +31,17 @@ func TestSymWalker(t *testing.T) {
 	}
 
 	// Test WithoutFiles... sends an empty map to check against res.Files
-	res, err = SymWalker(NewSymConf(
-		WithStartPath("/tests/users"),
+	res, err = SymWalker(NewSymConf("/tests/users",
 		WithFollowedSymLinks(),
 		WithLogging(),
 		WithoutFiles(),
 		WithDepth(INFINITE),
 	))
+	if err != nil {
+		t.Errorf("SymWalker returned an error: %s", err.Error())
+		t.FailNow()
+	}
+
 	pass = checkExpectedResults(getExpectedDirs(), res.Dirs, t)
 	if !pass {
 		t.Fail()
@@ -49,17 +53,27 @@ func TestSymWalker(t *testing.T) {
 	}
 
 	// Test WithDepth(FLAT)
-	res, err = SymWalker(NewSymConf(
-		WithStartPath("/tests/users/david/documents/"),
+	res, err = SymWalker(NewSymConf("/tests/users/david/documents/",
 		WithFollowedSymLinks(),
 		WithLogging(),
 		WithDepth(FLAT),
+		WithFileData(),
 	))
+	if err != nil {
+		t.Errorf("SymWalker returned an error: %s", err.Error())
+		t.FailNow()
+	}
+
 	pass = checkExpectedResults(getDepthTestExpectedDirValues(), res.Dirs, t)
 	if !pass {
 		t.Fail()
 	}
 	pass = checkExpectedResults(getDepthTestExpectedValues(), res.Files, t)
+	if !pass {
+		t.Fail()
+	}
+
+	pass = checkExpectedFileDataResults(res.Files, t)
 	if !pass {
 		t.Fail()
 	}
@@ -332,4 +346,15 @@ func getDepthTestExpectedValues() map[string]bool {
 	expected["/tests/users/david/documents/5-report.doc"] = false
 	expected["/tests/users/david/documents/6-report.doc"] = false
 	return expected
+}
+
+func checkExpectedFileDataResults(files DirEntries, t *testing.T) bool {
+	for _, file := range files {
+		fmt.Println("=======")
+		file.FileObj.DebugOut()
+		fmt.Println("=======")
+	}
+
+	t.Log("Neutral Test")
+	return true
 }
