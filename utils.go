@@ -4,7 +4,25 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/kardianos/osext"
+	objf "github.com/orme292/objectify"
 )
+
+// getCur returns the current directory path string.
+// It uses osext.ExecutableFolder to get the path of the current executable.
+// If there is an error, it returns "/" as the default path.
+//
+// Returns:
+// - the current directory path string
+func getCur() string {
+	cur, err := osext.ExecutableFolder()
+	if err != nil {
+		cur = "/"
+	}
+	return cur
+}
 
 // joinPaths concatenates two path strings and returns the cleaned result.
 // It is a wrapper for filepath.Join. filepath.Join cleans the path.
@@ -17,7 +35,7 @@ func joinPaths(start string, end string) string {
 	return filepath.Join(start, end)
 }
 
-// fullPathUnsafe returns the absolute and cleaned version of the given path.
+// fullPathSafe returns the absolute and cleaned version of the given path.
 // It is a wrapper for filepath.Abs. The filepath.Abs function cleans the
 // path.
 // Parameters:
@@ -25,8 +43,28 @@ func joinPaths(start string, end string) string {
 // Returns:
 // - the absolute and cleaned path string
 // Considered unsafe because potential errors from filepath.Abs are ignored.
-func fullPathUnsafe(path string) string {
-	path, _ = filepath.Abs(path)
+func fullPathSafe(path string) string {
+	path, err := filepath.Abs(curPathIf(path))
+	if err != nil {
+		path, err = os.Getwd()
+		if err != nil {
+			path = "/"
+		}
+	}
+	return path
+}
+
+// curPathIf calls getCur() on the given path if it is an empty string.
+// If the provided path is not empty, it does nothing and returns the path.
+// Parameters:
+// - path: the path string to be processed
+// Returns:
+// - the given path if non-empty, otherwise it returns the current directory path string.
+func curPathIf(path string) string {
+	path = strings.TrimSpace(path)
+	if path == "" || path == "." {
+		path = getCur()
+	}
 	return path
 }
 
@@ -39,6 +77,10 @@ func noise(noisy bool, f string, v ...interface{}) {
 	if noisy {
 		log.Printf(f, v...)
 	}
+}
+
+func getFileData(path string) (*objf.FileObj, error) {
+	return objf.File(path, objf.SetsAll())
 }
 
 // isReadable checks if a file or directory at the given path is readable.
