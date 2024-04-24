@@ -6,13 +6,17 @@ package symwalker
 // options below can be used.
 type SymConf struct {
 	StartPath      string
-	FollowSymlinks bool
-	WithoutFiles   bool
-	Noisy          bool
 	Depth          int
-	dirs           DirEntries
-	files          DirEntries
-	others         DirEntries
+	FileData       bool
+	FollowSymlinks bool
+
+	Noisy bool
+
+	WithoutFiles bool
+
+	dirs   DirEntries
+	files  DirEntries
+	others DirEntries
 }
 
 const (
@@ -29,9 +33,13 @@ const (
 		WithLogging(),
 	)
 */
-func NewSymConf(options ...OptFunc) *SymConf {
+func NewSymConf(path string, options ...OptFunc) *SymConf {
 
-	c := &SymConf{}
+	path = fullPathSafe(path)
+
+	c := &SymConf{
+		StartPath: path,
+	}
 	for _, option := range options {
 		option(c)
 	}
@@ -41,12 +49,19 @@ func NewSymConf(options ...OptFunc) *SymConf {
 
 type OptFunc func(*SymConf)
 
-// WithStartPath accepts the path in which the directory walk
-// will start. It MUST be a directory, not a file, or a symlink to
-// a directory.
-func WithStartPath(startPath string) OptFunc {
+// WithDepth limits how many levels SymWalker will walk below
+// the provided StartPath directory. Value n can be set to
+// any number. INFINITE is equal to 0 or infinite depth. FLAT
+// is equal to 1 -- SymWalker will not go below the top level.
+func WithDepth(n int) OptFunc {
 	return func(c *SymConf) {
-		c.StartPath = startPath
+		c.Depth = n
+	}
+}
+
+func WithFileData() OptFunc {
+	return func(c *SymConf) {
+		c.FileData = true
 	}
 }
 
@@ -71,15 +86,5 @@ func WithLogging() OptFunc {
 func WithoutFiles() OptFunc {
 	return func(c *SymConf) {
 		c.WithoutFiles = true
-	}
-}
-
-// WithDepth limits how many levels SymWalker will walk below
-// the provided StartPath directory. Value n can be set to
-// any number. INFINITE is equal to 0 or infinite depth. FLAT
-// is equal to 1 -- SymWalker will not go below the top level.
-func WithDepth(n int) OptFunc {
-	return func(c *SymConf) {
-		c.Depth = n
 	}
 }
