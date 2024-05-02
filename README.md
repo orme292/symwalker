@@ -1,6 +1,6 @@
 # SymWalker
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/orme292/symwalker@v0.1.8.svg)](https://pkg.go.dev/github.com/orme292/symwalker@v0.1.8)
+[![Go Reference](https://pkg.go.dev/badge/github.com/orme292/symwalker.svg)](https://pkg.go.dev/github.com/orme292/symwalker@v0.1.9)
 
 SymWalker is a directory tree walker with symlink loop protection. It works by building a
 separate history for each sub-directory branch (internally called lineHistory) underneath
@@ -11,7 +11,7 @@ other directory entries.
 ## Import this Module
 
 ```shell
-go get github.com/orme292/symwalker@v0.1.8
+go get github.com/orme292/symwalker@v0.1.9
 ```
 
 ```go
@@ -99,7 +99,7 @@ than `ModeDir`. `Results.Files` are paths which match no `os.FileMode` type.
 ## `FileObj` Field
 
 For the `FileObj` field, see the [Objectify](https://github.com/orme292/objectify) library
-[documentation](https://pkg.go.dev/github.com/orme292/objectify@v0.1.0) for information.
+[documentation](https://pkg.go.dev/github.com/orme292/objectify) for information.
 
 ## Example
 
