@@ -80,6 +80,8 @@ func startWalkLoop(conf *SymConf) (err error) {
 // If the basePath's target is entTypeFile, entTypeOther, entTypeErrored, it is added to results.
 func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 
+	noise(conf.Noisy, "dirWalk: %s", basePath)
+
 	history = history.branch()
 
 	basePathEnt := isEntType(basePath)
@@ -209,6 +211,8 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 // or entTypeErrored then the path is added to the results.
 func processDirEntry(conf *SymConf, path string, history lineHistory) {
 
+	noise(conf.Noisy, "processDirEntry: %s", path)
+
 	history = history.branch()
 
 	ent := isEntType(path)
@@ -261,44 +265,33 @@ func processDirEntry(conf *SymConf, path string, history lineHistory) {
 
 		case entTypeFile:
 
-			if conf.WithoutFiles {
-				break
+			if !conf.WithoutFiles {
+				noise(conf.Noisy, "Process (%s): %s", isEntType(path).string(), path)
+				conf.files.add(path, conf.FileData)
 			}
-
-			noise(conf.Noisy, "Process (%s): %s", isEntType(path).string(), path)
-
-			conf.files.add(path, conf.FileData)
 
 		case entTypeOther, entTypeErrored:
 
-			if conf.WithoutFiles {
-				break
+			if !conf.WithoutFiles {
+				noise(conf.Noisy, "Process (%s): %s", isEntType(path).string(), path)
+				conf.others.add(path, conf.FileData)
 			}
 
-			noise(conf.Noisy, "Process (%s): %s", isEntType(path).string(), path)
-
-			conf.others.add(path, conf.FileData)
 		}
 
 	case entTypeFile:
 
-		if conf.WithoutFiles {
-			break
+		if !conf.WithoutFiles {
+			noise(conf.Noisy, "Process (%s): %s", isEntType(path).string(), path)
+			conf.files.add(path, conf.FileData)
 		}
-
-		noise(conf.Noisy, "Process (%s): %s", isEntType(path).string(), path)
-
-		conf.files.add(path, conf.FileData)
 
 	case entTypeOther, entTypeErrored:
 
-		if conf.WithoutFiles {
-			break
+		if !conf.WithoutFiles {
+			noise(conf.Noisy, "Process (%s): %s", isEntType(path).string(), path)
+			conf.others.add(path, conf.FileData)
 		}
-
-		noise(conf.Noisy, "Process (%s): %s", isEntType(path).string(), path)
-
-		conf.others.add(path, conf.FileData)
 
 	}
 
