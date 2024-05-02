@@ -9,8 +9,7 @@ import (
 
 func main() {
 
-	conf := sw.NewSymConf(
-		sw.WithStartPath("/Users/andrew"),
+	conf := sw.NewSymConf("/Users/aorme",
 		sw.WithFollowedSymLinks(),
 		sw.WithLogging(),
 	)
