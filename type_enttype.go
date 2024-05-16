@@ -2,7 +2,6 @@ package symwalker
 
 import (
 	"os"
-	"path/filepath"
 )
 
 // entType is a simplified file type system.
@@ -25,11 +24,6 @@ func (st entType) string() string {
 // The function returns the result received by calling the entTypeFromInfo function,
 // which is passed the info from os.Lstat.
 func isEntType(path string) entType {
-	path, err := filepath.Abs(path)
-	if err != nil {
-		return entTypeErrored
-	}
-
 	info, err := os.Lstat(path)
 	if err != nil {
 		return entTypeErrored

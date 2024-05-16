@@ -14,31 +14,39 @@ type DirEntries []DirEntry
 // with file data from objectify, and the path field, then appended.
 // If withData is false, then the Path field is populated and appended.
 func (re *DirEntries) add(path string, withData bool) {
+
 	var de DirEntry
-	if !re.pathExists(path) {
-		if withData {
-			fo, err := objf.File(path, objf.SetsAll())
-			if err != nil {
-				fo = &objf.FileObj{}
-			}
-			de = DirEntry{Path: path, FileObj: fo}
-		} else {
-			de = DirEntry{Path: path}
+	if withData {
+
+		fo, err := objf.File(path, objf.SetsAll())
+		if err != nil {
+			fo = &objf.FileObj{}
 		}
-		*re = append(*re, de)
+		de = DirEntry{Path: path, FileObj: fo}
+
+	} else {
+
+		de = DirEntry{Path: path}
+
 	}
+
+	*re = append(*re, de)
+
 }
 
 // pathExists checks if a given path already exists
 // in the DirEntries slice. It returns true if the
 // path exists, otherwise it returns false.
 func (re *DirEntries) pathExists(p string) bool {
+
 	for _, entry := range *re {
 		if entry.Path == p {
 			return true
 		}
 	}
+
 	return false
+
 }
 
 // Results contains each recordable directory entry

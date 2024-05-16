@@ -5,6 +5,7 @@
 package symwalker
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,11 +14,6 @@ import (
 // SymWalker accepts a configuration object. It calls the function that
 // starts the main directory walking loop. It returns a Results object.
 func SymWalker(conf *SymConf) (results Results, err error) {
-
-	conf.StartPath, err = filepath.Abs(conf.StartPath)
-	if err != nil {
-		return
-	}
 
 	loopErr := startWalkLoop(conf)
 	if loopErr != nil {
@@ -38,20 +34,30 @@ func SymWalker(conf *SymConf) (results Results, err error) {
 // a file or a symlink.
 func startWalkLoop(conf *SymConf) (err error) {
 
+	conf.StartPath = fullPathSafe(conf.StartPath)
+
 	ent := isEntType(conf.StartPath)
 
-	readable, err := isReadable(fullPathSafe(conf.StartPath), ent)
-	if err != nil || !readable {
-		noise(conf.Noisy, "not readable: %s", conf.StartPath)
-		return fmt.Errorf("StartPath is not readable: %s", conf.StartPath)
-	}
+	noise(conf.Noisy, "Path %q is %q", conf.StartPath, ent.string())
 
 	switch ent {
 	case entTypeDir:
 
-		err := dirWalk(conf, conf.StartPath, lineHistory{})
+		err = dirWalk(conf, conf.StartPath, lineHistory{})
+
+	case entTypeLink:
+
+		target, err := filepath.EvalSymlinks(conf.StartPath)
 		if err != nil {
-			break
+			noise(conf.Noisy, "StartPath could not be resolved: %s", conf.StartPath)
+			return errors.New("StartPath could not be resolved")
+		}
+
+		if isEntType(target) == entTypeDir {
+			err = dirWalk(conf, conf.StartPath, lineHistory{})
+		} else {
+			noise(conf.Noisy, "StartPath must lead to directory: %s", conf.StartPath)
+			return errors.New("StartPath must lead to directory")
 		}
 
 	default:
@@ -86,12 +92,6 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 
 	basePathEnt := isEntType(basePath)
 
-	readable, err := isReadable(fullPathSafe(basePath), basePathEnt)
-	if err != nil || !readable {
-		err = fmt.Errorf("not readable: %s", basePath)
-		return
-	}
-
 	noise(conf.Noisy, "Reading %s", basePath)
 
 	switch basePathEnt {
@@ -102,8 +102,8 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 		}
 
 		if history.pathExists(basePath) {
-			noise(conf.Noisy, "Path already processed: %s", basePath)
-			return fmt.Errorf("path already processed: %s", basePath)
+			noise(conf.Noisy, "Skipping directory because it was already walked: %s", basePath)
+			return fmt.Errorf("path exists in line history: %s", basePath)
 		}
 		history = history.add(basePath)
 
@@ -116,19 +116,21 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 
 		for _, entry := range entries {
 
-			workPath := joinPaths(basePath, entry.Name())
-			processDirEntry(conf, workPath, history)
+			entryPath := joinPaths(basePath, entry.Name())
+			processDirEntry(conf, entryPath, history)
 
 		}
 
 	case entTypeLink:
 
 		if !conf.FollowSymlinks {
-			noise(conf.Noisy, "Not evaluating symlink: %s", basePath)
+			noise(conf.Noisy, "Skipping symlink: %s", basePath)
 			break
 		}
+
 		target, err := filepath.EvalSymlinks(basePath)
 		if err != nil {
+			noise(conf.Noisy, "Could not evaluate symlink: %s", basePath)
 			return err
 		}
 
@@ -140,8 +142,8 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 			}
 
 			if history.pathExists(target) {
-				noise(conf.Noisy, "Path already processed: %s", target)
-				return fmt.Errorf("path already processed: %s", target)
+				noise(conf.Noisy, "Skipping symlinked path already processed: %q=>%q", basePath, target)
+				return fmt.Errorf("symlinked path already processed: %q=>%q", basePath, target)
 			}
 			history = history.add(target)
 
@@ -154,8 +156,8 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 
 			for _, entry := range entries {
 
-				workPath := joinPaths(basePath, entry.Name())
-				processDirEntry(conf, workPath, history)
+				entryPath := joinPaths(basePath, entry.Name())
+				processDirEntry(conf, entryPath, history)
 
 			}
 
@@ -165,41 +167,33 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 
 		case entTypeFile:
 
-			if conf.WithoutFiles {
-				break
+			if !conf.WithoutFiles {
+				conf.files.add(basePath, conf.FileData)
 			}
-
-			conf.files.add(basePath, conf.FileData)
 
 		case entTypeOther, entTypeErrored:
 
-			if conf.WithoutFiles {
-				break
+			if !conf.WithoutFiles {
+				conf.others.add(basePath, conf.FileData)
 			}
-
-			conf.others.add(basePath, conf.FileData)
 
 		}
 
 	case entTypeFile:
 
-		if conf.WithoutFiles {
-			break
+		if !conf.WithoutFiles {
+			conf.files.add(basePath, conf.FileData)
 		}
-
-		conf.files.add(basePath, conf.FileData)
 
 	case entTypeOther, entTypeErrored:
 
-		if conf.WithoutFiles {
-			break
+		if !conf.WithoutFiles {
+			conf.others.add(basePath, conf.FileData)
 		}
-
-		conf.others.add(basePath, conf.FileData)
 
 	}
 
-	return
+	return err
 
 }
 
@@ -211,17 +205,11 @@ func dirWalk(conf *SymConf, basePath string, history lineHistory) (err error) {
 // or entTypeErrored then the path is added to the results.
 func processDirEntry(conf *SymConf, path string, history lineHistory) {
 
-	noise(conf.Noisy, "processDirEntry: %s", path)
+	noise(conf.Noisy, "Processing: %s", path)
 
 	history = history.branch()
 
 	ent := isEntType(path)
-
-	readable, err := isReadable(fullPathSafe(path), ent)
-	if err != nil || !readable {
-		noise(conf.Noisy, "Not readable: %s", path)
-		return
-	}
 
 	switch ent {
 	case entTypeDir:
@@ -234,16 +222,17 @@ func processDirEntry(conf *SymConf, path string, history lineHistory) {
 	case entTypeLink:
 
 		if !conf.FollowSymlinks {
-			noise(conf.Noisy, "Not evaluating symlink: %s", path)
+			noise(conf.Noisy, "Skipping symlink: %s", path)
 			break
 		}
 
 		target, err := filepath.EvalSymlinks(path)
 		if err != nil {
+			noise(conf.Noisy, "Could not evaluate symlink: %s", path)
 			return
 		}
 
-		noise(conf.Noisy, "Processing link: %s; target: %s; (leads to: %s)", path, target, isEntType(target).string())
+		noise(conf.Noisy, "Link:  %q links to => %q", path, target)
 
 		switch isEntType(target) {
 		case entTypeDir:
@@ -260,8 +249,8 @@ func processDirEntry(conf *SymConf, path string, history lineHistory) {
 				return
 			}
 
-			workPath := joinPaths(path, linkTarget)
-			processDirEntry(conf, workPath, history)
+			linkTargetBase := joinPaths(path, linkTarget)
+			processDirEntry(conf, linkTargetBase, history)
 
 		case entTypeFile:
 

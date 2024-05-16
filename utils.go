@@ -17,11 +17,11 @@ import (
 // Returns:
 // - the current directory path string
 func getCur() string {
-	cur, err := osext.ExecutableFolder()
+	path, err := osext.ExecutableFolder()
 	if err != nil {
-		cur = "/"
+		path = "/"
 	}
-	return cur
+	return path
 }
 
 // joinPaths concatenates two path strings and returns the cleaned result.
@@ -44,7 +44,7 @@ func joinPaths(start string, end string) string {
 // - the absolute and cleaned path string
 // Considered unsafe because potential errors from filepath.Abs are ignored.
 func fullPathSafe(path string) string {
-	path, err := filepath.Abs(curPathIf(path))
+	path, err := filepath.Abs(curPathIfDot(path))
 	if err != nil {
 		path, err = os.Getwd()
 		if err != nil {
@@ -54,13 +54,13 @@ func fullPathSafe(path string) string {
 	return path
 }
 
-// curPathIf calls getCur() on the given path if it is an empty string.
+// curPathIfDot calls getCur() on the given path if it is an empty string.
 // If the provided path is not empty, it does nothing and returns the path.
 // Parameters:
 // - path: the path string to be processed
 // Returns:
 // - the given path if non-empty, otherwise it returns the current directory path string.
-func curPathIf(path string) string {
+func curPathIfDot(path string) string {
 	path = strings.TrimSpace(path)
 	if path == "" || path == "." {
 		path = getCur()
@@ -79,6 +79,8 @@ func noise(noisy bool, f string, v ...interface{}) {
 	}
 }
 
+// getFileData uses objectify to retrieve file data
+// [not used]
 func getFileData(path string) (*objf.FileObj, error) {
 	return objf.File(path, objf.SetsAll())
 }
@@ -91,13 +93,10 @@ func getFileData(path string) (*objf.FileObj, error) {
 // Returns:
 // - a boolean indicating if the path is readable
 // - an error if there was an error during the process
+// [Not Used]
 func isReadable(path string, ent entType) (bool, error) {
 	if ent == entTypeOther {
 		return false, nil
-	}
-	path, err := filepath.Abs(path)
-	if err != nil {
-		return false, err
 	}
 
 	f, err := os.Open(path)
